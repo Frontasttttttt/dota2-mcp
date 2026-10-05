@@ -1,0 +1,10 @@
+# Logs / state — не для git
+*.log
+gsi_latest.json
+live_history.json
+watcher_state.json
+heroes_cache.json
+__pycache__/
+*.pyc
+config.json
+.venv/

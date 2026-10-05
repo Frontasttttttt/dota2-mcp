@@ -1,0 +1,49 @@
+{
+  "timings": [
+    { "min": 0, "text": "0:00 — Купи стартовые предметы до выхода крипов. Поставь вард на руну, если играешь саппортом." },
+    { "min": 2, "text": "2:00 — Первая руна воды. Мидер/саппорты обязаны её контестить." },
+    { "min": 6, "text": "6:00 — Руна силы + ночное время скоро. Проверь вижн, обнови варды." },
+    { "min": 10, "text": "10:00 — Книжка опыта (Tome). Торmented? Нет. Просто забери wisdom-руны саппортами!" },
+    { "min": 14, "text": "14:00 — Wisdom-руны (7:00/14:00...). Не отдавай их бесплатно." },
+    { "min": 15, "text": "15:00 — Мид-гейм: группируйся, забирай первую вышку, ставь глубокие варды." },
+    { "min": 20, "text": "20:00 — Роша возможен. Проверь таймер, купи смоки, Gem по ситуации." },
+    { "min": 30, "text": "30:00+ — Лейт: играй вокруг buyback-статусов и Рошана. Не дайся по одному." }
+  ],
+  "pick_advice": {
+    "sniper": "Против Sniper: бери героев с гэп-клоузом (Storm, Ember, PA с Blink, Clockwerk, Tusk). Покупай Blink/Shadow Blade. Не стой в линию пассивно.",
+    "riki": "Против Riki: Sentry + Dust, Gem на 15-20 мин. Не ходи один. Герои с AoE-контролем (Axe, Tide, SK).",
+    "phantom_assassin": "Против PA: MKB/Silver Edge, Ghost Scepter на саппортов, контроль через стан. Не давай ей фрифарм 20 минут.",
+    "invoker": "Против Invoker: ранняя агрессия, герои с сайленсом (Orchid), быстро заканчивай игру до 35+ мин.",
+    "pudge": "Против Pudge: позиционка у крипов, варды на спотах хукеров, Force Staff. Не стой на клифе без вижна.",
+    "zeus": "Против Zeus: Glimmer/Cloak, Pipe, герои с прыжками. Расходитесь в драке, не кучкуйтесь.",
+    "tinker": "Против Tinker: бери инициаторов (Storm, Spirit Breaker, Nyx), купите Pipe/Lotus. Давите до его Blink+BoT.",
+    "huskar": "Против Huskar: Vessel, Heaven's Halberd, AA. Не деритесь под его Armlet-таймингом без Vessel.",
+    "default": "Общий совет: баланс физ/маг урона, стан+сейв, пуш-потенциал. Не бери 5 керри — возьми стан, ауры и того, кто бьёт здания."
+  },
+  "item_guides": {
+    "default": {
+      "starting": ["Tango", "Healing Salve", "Iron Branch x2", "статы по герою"],
+      "early": ["Power Treads / Phase / Arcane по герою", "Magic Wand", "1-2 Wraith Band / Bracer / Null"],
+      "mid": ["Blink/Force/Orchid по роли", "BKB — почти всегда кору к 25-30 мин", "дешёвые ауры команде"],
+      "late": ["апгрейд кора", "Satanic/Butterfly/MKB/Daedalus (физ) или Hex/Shiva/Octarine (маг)", "Aghanim's по ситуации", "Moon Shard съесть"]
+    },
+    "pudge": {
+      "starting": ["Tango", "Healing Salve", "Iron Branch", "Gauntlets of Strength"],
+      "early": ["Tranquil Boots", "Magic Wand", "Bracer"],
+      "mid": ["Blink Dagger", "Blade Mail", "Vanguard -> Crimson Guard"],
+      "late": ["Heart of Tarrasque", "Aghanim's Scepter", "Shiva's Guard / Lotus Orb"]
+    },
+    "sniper": {
+      "starting": ["Tango", "Wraith Band", "Iron Branch", "Slippers of Agility"],
+      "early": ["Power Treads", "Magic Wand", "Dragon Lance"],
+      "mid": ["Hurricane Pike", "Manta Style / Sange and Yasha", "BKB"],
+      "late": ["Daedalus", "MKB / Butterfly", "Satanic", "Moon Shard съесть"]
+    },
+    "invoker": {
+      "starting": ["Tango", "Mantle of Intelligence", "Iron Branch x2", "Faerie Fire"],
+      "early": ["Power Treads", "Magic Wand", "Urn / Null Talisman"],
+      "mid": ["Aghanim's Scepter", "Blink Dagger", "Witch Blade / Orchid"],
+      "late": ["Refresher Orb", "Octarine Core", "Hex", "BKB"]
+    }
+  }
+}
