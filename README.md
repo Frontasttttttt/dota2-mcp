@@ -1,36 +1,42 @@
-dota2-mcp — легальный MCP-сервер для Dota 2 (анализ, а не бот)
+# dota2-mcp — Legal Dota 2 MCP Server (Analytics, Not a Bot)
 
-Легальный помощник: GSI в реальном времени + OpenDota/STRATZ + тренер + запуск игры.
-НЕ играет за тебя в матчмейкинге, НЕ управляет героем, НЕ перехватывает ввод. VAC-safe.
+A Valve Anti-Cheat (VAC) safe assistant powered by the Model Context Protocol (MCP): real-time Game State Integration (GSI) + OpenDota & STRATZ analytics + automated coach tips.
 
-## Состав
+> [!IMPORTANT]
+> **100% VAC-Safe:** Does NOT automate gameplay, does NOT control the hero, and does NOT intercept player inputs. Completely read-only analytics assistant.
 
-- `server.py` — MCP-сервер (stdio, stdlib-only, без pip-зависимостей)
-- `gsi_server.py` — HTTP-приёмник Game State Integration (http://127.0.0.1:3000)
-- `coach_data.json` — советы тренера: тайминги, пик-советы, базовые билды
-- `config.json` — твой account_id, пути Steam/Dota, порт GSI
-- `tools/install_gsi.py` — установка GSI-конфига в Dota
-- `README.md` — этот файл
+---
 
-## Быстрый старт (Windows, PowerShell)
+## 📦 Components
+
+- `server.py` — MCP server implementation (stdio, Python standard library only, zero pip dependencies)
+- `gsi_server.py` — Local HTTP receiver for Dota 2 Game State Integration (`http://127.0.0.1:3000`)
+- `coach_data.json` — Coaching knowledge base: item timings, hero matchups, power spikes, and builds
+- `config.json` — Configurable account ID, Steam/Dota installation paths, and GSI port
+- `tools/install_gsi.py` — Automatic installer for the GSI configuration file into Dota 2 directories
+
+---
+
+## 🚀 Quick Start (Windows, PowerShell)
 
 ```powershell
 cd C:\AI\dota2-mcp
 
-# 1. Установить GSI-конфиг в обе найденные копии Dota (D: и E:)
+# 1. Install the GSI config into your Dota 2 installation
 python tools\install_gsi.py
 
-# 2. Запустить GSI-приёмник (оставь окно открытым во время игры)
+# 2. Start the local GSI receiver (keep this running while playing)
 python gsi_server.py
-# проверка: http://127.0.0.1:3000/status
+# Verification endpoint: http://127.0.0.1:3000/status
 
-# 3. Указать свой Dota account_id (числовой, НЕ steam64)
-# Узнать: https://www.opendota.com -> залогинься -> цифры в URL, либо https://steamid.io
+# 3. Configure your Dota numeric account ID (NOT SteamID64)
+# Find it at: https://www.opendota.com (digits in profile URL) or https://steamid.io
 python server.py --set-account 123456789
-
-# 4. Подключить к Claude Desktop / любому MCP-клиенту:
-# Claude Desktop -> Settings -> Developer -> Edit Config -> claude_desktop_config.json:
 ```
+
+### 4. Connect to Claude Desktop or any MCP Client
+
+Add the following to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -44,52 +50,30 @@ python server.py --set-account 123456789
 }
 ```
 
-Перезапусти Claude Desktop. Появятся инструменты `dota_*`.
+Restart your MCP client. All `dota_*` tools will be available immediately.
 
-## Инструменты MCP
+---
 
-| Инструмент | Что делает |
-|---|---|
-| `dota_launch` | Запускает Dota 2 через Steam (`-applaunch 570`). `mode=training` + инструкция по созданию лобби с ботами |
-| `dota_gsi_status` | Жив ли GSI-приёмник, когда был последний пакет от игры |
-| `dota_gsi_latest` | Последнее состояние игры: герой, HP/MP, KDA, GPM/XPM, карта, время |
-| `dota_gsi_install` | Переустановить GSI-конфиг в Dota |
-| `dota_set_account` / `dota_whoami` | Сохранить/показать account_id для OpenDota |
-| `dota_profile` | Профиль OpenDota: MMR-оценка, винрейт, топ-герои |
-| `dota_recent_matches` | Последние N матчей с KDA, героем, результатом |
-| `dota_match_details` | Разбор конкретного match_id |
-| `dota_hero_stats` | Твоя статистика на герое: матчи, винрейт |
-| `dota_coach_tip` | Совет тренера по текущей игре (GSI) или герою: тайминги, предметы |
-| `dota_pick_advice` | Совет по пику против 1–5 вражеских героев |
-| `dota_item_guide` | Базовый билд на героя (стартовые → мид → лейт) |
-| `dota_stratz_match` | Матч через STRATZ GraphQL (нужен `STRATZ_TOKEN`) |
+## 🛠️ MCP Tools Overview
 
-## Как включить GSI в Dota 2
+| Tool | Description |
+| :--- | :--- |
+| `dota_launch` | Launches Dota 2 via Steam (`-applaunch 570`) with training mode instructions |
+| `dota_gsi_status` | Checks GSI server heartbeat and last packet timestamp |
+| `dota_gsi_latest` | Fetches live in-game metrics: hero, HP/MP, KDA, GPM/XPM, game time |
+| `dota_gsi_install` | Reinstalls or repairs the GSI configuration file |
+| `dota_set_account` / `dota_whoami` | Sets or displays the active OpenDota account ID |
+| `dota_profile` | Retrieves OpenDota profile info: estimated MMR, win rate, signature heroes |
+| `dota_recent_matches` | Lists recent matches with stats, hero picks, and win/loss results |
+| `dota_match_details` | Detailed breakdown of a specific match ID |
+| `dota_hero_stats` | Hero performance analytics and win rates |
+| `dota_coach_tip` | Context-aware coaching advice for the current game state or hero |
+| `dota_pick_advice` | Draft recommendations against 1–5 enemy heroes |
+| `dota_item_guide` | Standard item build guides (Starting → Mid → Late game) |
+| `dota_stratz_match` | Advanced match data via STRATZ GraphQL (requires `STRATZ_TOKEN`) |
 
-`tools/install_gsi.py` кладёт файл сюда (в обе копии):
+---
 
-- `D:\SteamLibrary\steamapps\common\dota 2 beta\game\dota\cfg\gamestate_integration\gamestate_integration_dota2mcp.cfg`
-- `E:\SteamLibrary\steamapps\common\dota 2 beta\game\dota\cfg\gamestate_integration\...`
+## 📄 License
 
-Содержимое шлёт POST на `http://127.0.0.1:3000` каждые 0.5 c.
-GSI работает только пока запущен `python gsi_server.py` и идёт матч (или смотреть реплей).
-Если Dota обновится/переустановится — запусти установку ещё раз.
-
-## Тренировочное лобби с ботами (легально)
-
-1. Вызови `dota_launch` с `mode=training` (игра запустится).
-2. В игре: Играть → Тренировка с ботами → Выбери сложность → Начать.
-Это официальный режим Valve, бана нет.
-
-## STRATZ (опционально)
-
-1. Получи токен: https://stratz.com/api
-2. `setx STRATZ_TOKEN "твой_токен"` → перезапусти терминал
-3. Вызывай `dota_stratz_match` с `match_id`.
-
-## Проверка без Claude
-
-```powershell
-# список инструментов:
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | python server.py --oneshot
-```
+MIT
