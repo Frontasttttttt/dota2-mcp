@@ -1,4 +1,4 @@
-"""Инструменты ч.2: матчи, тренер, STRATZ."""
+"""Инструменты ч.2: матчи, тренер, STRATZ. Stdlib-only."""
 import json
 import os
 import urllib.request
@@ -21,28 +21,12 @@ def t_recent_matches(limit=10):
 
 
 def t_match_details(match_id):
-    try:
-        mid = int(match_id)
-    except Exception:
-        return {"ok": False, "error": "match_id числом"}
-    data, e = C.http_get_json("%s/matches/%s" % (C.CFG.get("opendota_base"), mid))
-    if e or not data:
-        return {"ok": False, "error": "OpenDota: %s" % (e or "не найден")}
-    out = {"ok": True, "match_id": mid,
-           "длительность_мин": round((data.get("duration") or 0) / 60.0, 1),
-           "победа_radiant": data.get("radiant_win"),
-           "счёт": "%s:%s" % (data.get("radiant_score", "?"), data.get("dire_score", "?"))}
-    acc = C.CFG.get("account_id")
-    for p in data.get("players") or []:
-        if acc and p.get("account_id") == acc:
-            out["ты"] = {"герой": p.get("hero_id"),
-                         "kda": "%s/%s/%s" % (p.get("kills", 0), p.get("deaths", 0), p.get("assists", 0)),
-                         "gpm": p.get("gold_per_min"), "xpm": p.get("xp_per_min"),
-                         "урон_героям": p.get("hero_damage"), "урон_зданиям": p.get("tower_damage")}
-            if (p.get("deaths") or 0) >= 8:
-                out["совет"] = "Много смертей: играй ближе к вижну, носи TP."
-            break
-    return out
+    import postgame_analyzer
+    aid = C.CFG.get("account_id")
+    rep = postgame_analyzer.analyze_match(match_id, aid)
+    if rep.get("ok"):
+        rep["текст"] = postgame_analyzer.fmt_postgame_report(rep)
+    return rep
 
 
 def t_hero_stats(hero_id):
@@ -78,7 +62,6 @@ def t_coach_tip(hero=None, minute=None):
                 h = (data.get("hero") or {}).get("name", "")
                 if h.startswith("npc_dota_hero_"):
                     hero = h[len("npc_dota_hero_"):]
-    # spectator live: enrich with score + last events
     spect_extra = []
     if data is not None:
         pl = data.get("player") or {}
@@ -125,7 +108,6 @@ def t_live_tick():
                                               "assists", "lh", "denies", "level", "hp", "max_hp", "alive",
                                               "respawn", "buyback_cost", "radiant_score", "dire_score")},
            "темп": C.deltas(h)}
-    # короткий вердикт
     try:
         t5 = (out["темп"].get("5мин") or {})
         fg = t5.get("золото_в_мин_факт")
@@ -177,13 +159,11 @@ def t_spectate_live():
 
 
 def t_pick_advice(enemies):
-    adv = C.COACH.get("pick_advice", {})
-    if isinstance(enemies, str):
-        enemies = [e.strip() for e in enemies.replace(",", " ").split() if e.strip()]
-    tips = [adv.get(C.norm_hero(e), adv.get("default", "Вижн и дизейблы.")) for e in (enemies or [])]
-    if not tips:
-        tips = [adv.get("default", "Баланс урона, стан+сейв, пуш.")]
-    return {"ok": True, "советы": tips}
+    import draft_engine
+    res = draft_engine.get_draft_advice(enemies)
+    if res.get("ok"):
+        res["текст"] = draft_engine.fmt_draft_advice(res)
+    return res
 
 
 def t_item_guide(hero):

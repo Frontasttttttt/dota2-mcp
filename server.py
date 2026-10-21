@@ -15,33 +15,33 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {"mode": {"type": "string"}, "hero": {"type": "string"}}}},
     {"name": "dota_gsi_status", "description": "Статус GSI-приёмника.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "dota_gsi_latest", "description": "Последнее состояние игры из GSI.",
+    {"name": "dota_gsi_latest", "description": "Последнее состояние игры из GSI (герой, HP/MP, KDA, таймеры, золото).",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "dota_gsi_install", "description": "Установить GSI-конфиг в Dota.",
+    {"name": "dota_gsi_install", "description": "Установить GSI-конфиг в Dota 2.",
      "inputSchema": {"type": "object", "properties": {}}},
     {"name": "dota_set_account", "description": "Сохранить числовой Dota account_id.",
      "inputSchema": {"type": "object", "properties": {"account_id": {"type": "integer"}}, "required": ["account_id"]}},
-    {"name": "dota_whoami", "description": "Показать account_id.",
+    {"name": "dota_whoami", "description": "Показать текущий сохраненный account_id.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "dota_profile", "description": "Профиль OpenDota.",
+    {"name": "dota_profile", "description": "Профиль OpenDota: винрейт, ранг, сигнатурные герои.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "dota_recent_matches", "description": "Последние матчи.",
+    {"name": "dota_recent_matches", "description": "Последние матчи игрока.",
      "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer"}}}},
-    {"name": "dota_match_details", "description": "Разбор матча.",
+    {"name": "dota_match_details", "description": "Глубокий пост-матч разбор: KDA, участие в драках, урон, аудит артефактов и ошибок.",
      "inputSchema": {"type": "object", "properties": {"match_id": {"type": "integer"}}, "required": ["match_id"]}},
-    {"name": "dota_hero_stats", "description": "Статистика на герое.",
+    {"name": "dota_hero_stats", "description": "Статистика игрока на конкретном герое.",
      "inputSchema": {"type": "object", "properties": {"hero_id": {"type": "integer"}}, "required": ["hero_id"]}},
-    {"name": "dota_coach_tip", "description": "Совет тренера.",
+    {"name": "dota_coach_tip", "description": "Совет тренера по таймингам карты или стадии игры.",
      "inputSchema": {"type": "object", "properties": {"hero": {"type": "string"}, "minute": {"type": "integer"}}}},
-    {"name": "dota_live_tick", "description": "Живой тик трекера: сейчас + темп/delta за 1 и 5 мин (факт GPM/LH), вердикт.",
+    {"name": "dota_live_tick", "description": "Живой тик трекера: сейчас + темп/дельта за 1 и 5 мин (факт GPM/LH), вердикт.",
      "inputSchema": {"type": "object", "properties": {}}},
     {"name": "dota_spectate_live", "description": "Максимум инфы при просмотре друга: GSI spectator + OpenDota live + разбор.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "dota_pick_advice", "description": "Совет по пику.",
-     "inputSchema": {"type": "object", "properties": {"enemies": {"type": "array", "items": {"type": "string"}}}}},
-    {"name": "dota_item_guide", "description": "Билд на героя.",
+    {"name": "dota_pick_advice", "description": "Глубокий драфт-анализ и контрпики против 1-5 врагов (все 124+ героя, сленг, статистика OpenDota, аудит урона/контроля/пассивок, шмотки).",
+     "inputSchema": {"type": "object", "properties": {"enemies": {"type": ["array", "string"], "items": {"type": "string"}}}}},
+    {"name": "dota_item_guide", "description": "Билд на героя по стадиям игры.",
      "inputSchema": {"type": "object", "properties": {"hero": {"type": "string"}}, "required": ["hero"]}},
-    {"name": "dota_stratz_match", "description": "Матч через STRATZ.",
+    {"name": "dota_stratz_match", "description": "Матч через STRATZ GraphQL (при наличии STRATZ_TOKEN).",
      "inputSchema": {"type": "object", "properties": {"match_id": {"type": "integer"}}, "required": ["match_id"]}},
 ]
 
@@ -78,7 +78,7 @@ def handle(msg):
 
     if method == "initialize":
         return ok({"protocolVersion": "2024-11-05", "capabilities": {"tools": {}},
-                   "serverInfo": {"name": "dota2-mcp", "version": "1.0.0"}})
+                   "serverInfo": {"name": "dota2-mcp", "version": "1.1.0"}})
     if method in ("notifications/initialized", "notifications/cancelled"):
         return None
     if method == "tools/list":
@@ -98,18 +98,13 @@ def handle(msg):
 
 
 def main():
-    if "--list" in sys.argv:
-        print(json.dumps([t["name"] for t in TOOLS], ensure_ascii=False, indent=2))
-        return
-    if "--set-account" in sys.argv:
-        i = sys.argv.index("--set-account")
-        print(json.dumps(A.t_set_account(sys.argv[i + 1]), ensure_ascii=False, indent=2))
-        return
-    if "--oneshot" in sys.argv:
-        data = sys.stdin.read()
-        print(json.dumps(handle(json.loads(data)), ensure_ascii=False, indent=2))
-        return
-    for line in sys.stdin:
+    while True:
+        try:
+            line = sys.stdin.readline()
+        except (EOFError, KeyboardInterrupt):
+            break
+        if not line:
+            break
         line = line.strip()
         if not line:
             continue

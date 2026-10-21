@@ -24,11 +24,11 @@ HELP = """Команды:
   live                 - 1 тик живого трекера: сейчас + темп за 1/5 мин (GPM факт!)
   watch [сек]          - LIVE каждые N сек (по умолч. 5): тик + дельты + вердикт
   tip [герой] [минута] - совет тренера (без аргументов = по живой игре)
-  pick <враги...>      - контрпик, напр: pick sniper riki
+  pick <враги...>      - глубокий контрпик (все 124+ героя, сленг: pick сф од или pick sniper riki)
   item <герой>         - закуп, напр: item invoker
   profile              - твой OpenDota-профиль
   recent [N]           - последние матчи
-  match <id>           - разбор матча
+  match <id>           - глубокий пост-матч разбор (ошибки, KDA, урон, закуп)
   hero <hero_id>       - статистика на герое
   launch [training]    - запустить Dota 2
   account <id>         - сохранить account_id
@@ -121,7 +121,11 @@ def main():
                     minute = int(a)
             show(B.t_coach_tip(hero, minute))
         elif cmd == "pick":
-            show(B.t_pick_advice(args))
+            res = B.t_pick_advice(args)
+            if res.get("текст"):
+                print(res["текст"])
+            else:
+                show(res)
         elif cmd == "item":
             show(B.t_item_guide(args[0] if args else ""))
         elif cmd == "profile":
@@ -132,7 +136,11 @@ def main():
             if not args:
                 print("Нужно: match <match_id>")
             else:
-                show(B.t_match_details(args[0]))
+                res = B.t_match_details(args[0])
+                if res.get("текст"):
+                    print(res["текст"])
+                else:
+                    show(res)
         elif cmd == "watch":
             cmd_watch(args[0] if args and args[0].isdigit() else 5)
         elif cmd == "live":
