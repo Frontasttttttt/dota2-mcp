@@ -10,7 +10,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True)
 except Exception:
     pass
 
@@ -506,8 +506,8 @@ class H(BaseHTTPRequestHandler):
 def main():
     C.track_tick()
     srv = HTTPServer((HOST, PORT), H)
-    print("Dota 2 Live HUD 2.0 запущен: http://%s:%d" % (HOST, PORT))
-    print("Открой в браузере. Данные обновляются плавно без перезагрузки страницы.")
+    print("Dota 2 Live HUD 2.0 запущен: http://%s:%d" % (HOST, PORT), flush=True)
+    print("Открой в браузере. Данные обновляются плавно без перезагрузки страницы.", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
