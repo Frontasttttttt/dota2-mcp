@@ -128,14 +128,8 @@ def main():
             else:
                 show(res)
         elif cmd == "scout":
-            if not args:
-                aid = C.CFG.get("account_id")
-                if aid:
-                    args = [str(aid)]
-                else:
-                    print("Нужно: scout <account_id... или ссылки/текст>")
-                    continue
-            res = B.t_scout_lobby(" ".join(args))
+            query = " ".join(args) if args else "auto"
+            res = B.t_scout_lobby(query)
             if res.get("текст"):
                 print(res["текст"])
             else:

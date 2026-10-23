@@ -1,7 +1,13 @@
 """Установка GSI-конфига в найденные копии Dota 2."""
+import io
 import json
 import os
 import sys
+
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 GSI_CFG = '''"Dota2MCP"
 {
@@ -19,6 +25,7 @@ GSI_CFG = '''"Dota2MCP"
     "provider"        "1"
     "map"             "1"
     "player"          "1"
+    "allplayers"      "1"
     "hero"            "1"
     "abilities"       "1"
     "items"           "1"
@@ -48,42 +55,29 @@ def install_to(dota_root, port=3000):
 
 
 def main():
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    cfg_path = os.path.join(here, "config.json")
-    installs = DEFAULT_INSTALLS
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    cfg_path = os.path.join(base, "config.json")
     port = 3000
+    roots = DEFAULT_INSTALLS
     try:
         with open(cfg_path, encoding="utf-8") as f:
-            cfg = json.load(f)
-        if cfg.get("dota_installs"):
-            installs = cfg["dota_installs"]
-        port = int(cfg.get("gsi_port", 3000))
+            c = json.load(f)
+            port = int(c.get("gsi_port", 3000))
+            roots = c.get("dota_installs") or roots
     except Exception:
         pass
-    extra = [a for a in sys.argv[1:] if not a.startswith("-")]
-    if extra:
-        installs = extra
-    print("GSI install, port=%d" % port)
-    ok = 0
-    for root in installs:
-        dota_exe = os.path.join(root, "game", "bin", "win64", "dota2.exe")
-        exists = os.path.exists(root)
-        print(("- %s %s" % (root, "(папка есть)" if exists else "(ПАПКА НЕ НАЙДЕНА)")))
-        if not exists:
-            continue
-        try:
-            p = install_to(root, port)
-            print(("  -> OK: %s" % p))
-            if not os.path.exists(dota_exe):
-                print("  (dota2.exe не найден по стандартному пути — но cfg положен, GSI сработает)")
-            ok += 1
-        except Exception as e:
-            print(("  -> ОШИБКА: %s" % e))
-    print("Готово: %d/%d. Теперь запусти: python gsi_server.py" % (ok, len(installs)))
-    return 0 if ok else 1
+
+    found = False
+    for r in roots:
+        if os.path.exists(r):
+            p = install_to(r, port)
+            print("Установлен GSI-конфиг:", p)
+            found = True
+        else:
+            print("Папка не найдена:", r)
+    if not found:
+        print("ВНИМАНИЕ: Dota 2 не найдена по стандартным путям. Пропиши dota_installs в config.json.")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

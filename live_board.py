@@ -21,6 +21,7 @@ import dota_core as C
 import draft_engine
 import live_data as D
 import scout_engine
+import auto_scout
 
 HOST = "127.0.0.1"
 PORT = 8081
@@ -224,6 +225,168 @@ HTML_PAGE = """<!DOCTYPE html>
     }
     .hero-chip-good { border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
     .hero-chip-bad { border-color: rgba(244, 63, 94, 0.4); color: #f87171; }
+
+    /* Auto Scout & Teams Grid */
+    .teams-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    @media (max-width: 960px) {
+      .teams-container { grid-template-columns: 1fr; }
+    }
+    .team-column {
+      background: rgba(22, 27, 34, 0.7);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .team-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #30363d;
+      margin-bottom: 4px;
+    }
+    .team-title-rad {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--radiant);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .team-title-dire {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dire);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .team-title-un {
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .player-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .player-card:hover { border-color: #58a6ff; }
+    .card-danger { border-left: 4px solid #f43f5e !important; }
+    .card-warn { border-left: 4px solid #f59e0b !important; }
+    .card-tilt { border-left: 4px solid #38bdf8 !important; }
+    .card-normal { border-left: 4px solid #10b981 !important; }
+    .card-you {
+      border: 1px solid #6366f1 !important;
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.12), #0d1117) !important;
+    }
+    .player-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .player-profile-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .player-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid #30363d;
+      object-fit: cover;
+      background: #21262d;
+    }
+    .player-name-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .player-sub-text {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .player-sub-text a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .player-sub-text a:hover {
+      text-decoration: underline;
+    }
+    .hero-picked-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #e2e8f0;
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .stats-summary {
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .tactical-box {
+      font-size: 11px;
+      color: #a5b4fc;
+      background: rgba(99, 102, 241, 0.1);
+      border-left: 2px solid #818cf8;
+      border-radius: 3px;
+      padding: 4px 8px;
+      margin-top: 2px;
+    }
+    .alert-banner {
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      color: #fecdd3;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-danger-pulse {
+      animation: pulseDanger 2s infinite;
+    }
+    @keyframes pulseDanger {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+      70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
   </style>
 </head>
 <body>
@@ -348,18 +511,34 @@ HTML_PAGE = """<!DOCTYPE html>
     <!-- Scout & Smurf Radar Panel -->
     <div class="card">
       <div class="card-title">
-        <span>🕵️ Разведка лобби и Смурф-радар (Pick Phase Scout)</span>
-        <span class="badge" style="background: rgba(129, 140, 248, 0.2); border-color: #818cf8; color: #818cf8;">100% VAC-Safe | 0 токенов</span>
+        <span>⚔️ Радар Лобби: Союзники vs Противники (Pick Phase & Live Scout)</span>
+        <span class="badge" id="lobby-status-badge" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">📡 Авто-поиск активен</span>
       </div>
       <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-        Мгновенная выписка по союзникам и противникам: проверка на потенциального смурфа/бустера, винрейт формы, пул недавних героев и советы по банам.
+        Автоматическое обнаружение всех игроков во время выбора героев: проверка на смурфа/бустера, винрейт, недавний пул и советы по банам (0 кликов, 100% VAC-Safe).
       </div>
-      <div class="draft-box">
-        <input type="text" id="scout-input" class="draft-input" placeholder="Введи Account ID, SteamID64, ссылки OpenDota/Dotabuff или вставь текст из консоли status...">
-        <button class="draft-btn" style="background: #2563eb;" onclick="runScout()">Просканировать лобби</button>
-        <button class="draft-btn" style="background: #374151;" onclick="scoutSelf()">Мой профиль</button>
+
+      <!-- Alert Banner if threats detected -->
+      <div id="threat-alert-banner" class="alert-banner" style="display: none;"></div>
+
+      <!-- Two Teams Grid (Radiant vs Dire) -->
+      <div id="auto-teams-container">
+        <div style="color: var(--text-muted); padding: 16px; text-align: center; background: #161b22; border-radius: 8px;">
+          ⏳ Ожидание лобби... Радар слушает GSI, консоль и буфер обмена в реальном времени.<br>
+          <span style="font-size: 11px; color: #8b949e;">Как только начнется стадия выбора героев, выписки по союзникам и противникам появятся здесь автоматически.</span>
+        </div>
       </div>
-      <div id="scout-output"></div>
+
+      <!-- Collapsible Manual & Clipboard Tools -->
+      <details style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+        <summary style="cursor: pointer; color: #818cf8; font-weight: 600;">➕ Ручной поиск / проверка чужого ID или ссылки</summary>
+        <div class="draft-box" style="margin-top: 10px;">
+          <input type="text" id="scout-input" class="draft-input" placeholder="Введи Account ID, SteamID64, ссылки OpenDota/Dotabuff или вставь текст...">
+          <button class="draft-btn" style="background: #2563eb;" onclick="runScout()">Просканировать</button>
+          <button class="draft-btn" style="background: #374151;" onclick="scoutSelf()">Мой профиль</button>
+        </div>
+        <div id="scout-output"></div>
+      </details>
     </div>
 
     <!-- Draft Counter Tool Inline -->
@@ -479,6 +658,11 @@ HTML_PAGE = """<!DOCTYPE html>
         if (evList.length > 0) {
           document.getElementById('event-feed').innerHTML = evList.map(e => '<div class="event-item">' + e + '</div>').join('');
         }
+
+        // Auto Lobby Scout
+        if (b.lobby_scout) {
+          updateLobbyDisplay(b.lobby_scout);
+        }
       } catch (err) {
         console.error('Update error:', err);
       }
@@ -583,6 +767,170 @@ HTML_PAGE = """<!DOCTYPE html>
       runScout();
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderPlayerCard(p) {
+      const v = p.smurf_verdict || {};
+      const s = p.recent_summary || {};
+      const isYou = p.is_you;
+
+      let cardClass = 'player-card';
+      if (isYou) cardClass += ' card-you';
+      else if (v.class === 'danger') cardClass += ' card-danger';
+      else if (v.class === 'warning') cardClass += ' card-warn';
+      else if (v.class === 'tilt') cardClass += ' card-tilt';
+      else cardClass += ' card-normal';
+
+      let badgeClass = 'badge-norm';
+      if (v.class === 'danger') badgeClass = 'badge-danger badge-danger-pulse';
+      else if (v.class === 'warning') badgeClass = 'badge-warn';
+      else if (v.class === 'tilt') badgeClass = 'badge-tilt';
+
+      const avatarSrc = p.avatar || 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg';
+      const heroBadge = p.hero_name ? `<span class="hero-picked-tag">⚔️ ${escapeHtml(p.hero_name)}</span>` : '';
+      const youBadge = isYou ? '<span class="badge" style="background: #4f46e5; color: #fff; margin-left: 4px;">ТЫ</span>' : '';
+
+      let html = `<div class="${cardClass}">`;
+      html += `  <div class="player-row-top">`;
+      html += `    <div class="player-profile-left">`;
+      html += `      <img src="${avatarSrc}" class="player-avatar" alt="avatar" onerror="this.src='https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg'">`;
+      html += `      <div class="player-name-box">`;
+      html += `        <div class="player-name-text">${escapeHtml(p.name || 'Player')} ${youBadge} ${heroBadge}</div>`;
+      html += `        <div class="player-sub-text">${escapeHtml(p.rank_name || 'Unranked')} | ID: <a href="https://www.opendota.com/players/${p.account_id}" target="_blank">${p.account_id}</a></div>`;
+      html += `      </div>`;
+      html += `    </div>`;
+      html += `    <span class="badge ${badgeClass}">${escapeHtml(v.badge || '🟢 ОБЫЧНЫЙ')}</span>`;
+      html += `  </div>`;
+
+      if (p.scouted && s.matches_analyzed) {
+        html += `  <div class="stats-summary">`;
+        html += `    <span>Форма: <strong>${s.wins}W - ${s.losses}L (${s.winrate_pct}% WR)</strong></span>`;
+        html += `    <span>KDA: <strong>${s.avg_kda}</strong></span>`;
+        html += `    <span>GPM: <strong>${s.avg_gpm}</strong></span>`;
+        html += `  </div>`;
+
+        if (p.recent_heroes && p.recent_heroes.length > 0) {
+          html += `  <div class="chips-container">`;
+          p.recent_heroes.slice(0, 3).forEach(h => {
+            const hClass = h.winrate_pct >= 60 ? 'hero-chip-good' : (h.winrate_pct <= 40 ? 'hero-chip-bad' : '');
+            const fire = h.is_smurf_hero ? '🔥 ' : '';
+            html += `<span class="hero-chip ${hClass}" title="${h.games} игр, ${h.winrate_pct}% побед">${fire}${escapeHtml(h.hero_name)} ${h.winrate_pct}% (${h.games})</span>`;
+          });
+          html += `  </div>`;
+        }
+
+        if (v.triggers && v.triggers.length > 0) {
+          html += `  <div style="font-size: 11px; color: #f59e0b; margin-top: 3px;">${escapeHtml(v.triggers[0])}</div>`;
+        }
+        if (v.tips && v.tips.length > 0) {
+          html += `  <div class="tactical-box">💡 ${escapeHtml(v.tips[0])}</div>`;
+        }
+      } else if (!p.scouted) {
+        html += `  <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">${escapeHtml(p.error || 'Сканирование профиля...')}</div>`;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    function updateLobbyDisplay(lobby) {
+      if (!lobby) return;
+      const rad = lobby.radiant || [];
+      const dire = lobby.dire || [];
+      const unassigned = lobby.unassigned || [];
+      const total = lobby.total_players || 0;
+
+      const badge = document.getElementById('lobby-status-badge');
+      if (badge) {
+        if (total > 0) {
+          badge.textContent = '🟢 В лобби: ' + total + ' игроков';
+          badge.style.borderColor = '#10b981';
+          badge.style.color = '#34d399';
+        } else {
+          badge.textContent = '📡 Авто-поиск активен';
+          badge.style.borderColor = '#818cf8';
+          badge.style.color = '#818cf8';
+        }
+      }
+
+      // Threat alert banner
+      const banner = document.getElementById('threat-alert-banner');
+      if (banner) {
+        const summ = lobby.summary || {};
+        if (summ.enemy_smurfs_detected > 0 || (summ.suggested_bans && summ.suggested_bans.length > 0)) {
+          let bHtml = '<div style="font-size: 20px;">🚨</div><div>';
+          if (summ.enemy_smurfs_detected > 0) {
+            bHtml += '<strong>ВНИМАНИЕ: Во вражеской команде обнаружено опасных игроков/смурфов: ' + summ.enemy_smurfs_detected + '!</strong><br>';
+          }
+          if (summ.suggested_bans && summ.suggested_bans.length > 0) {
+            bHtml += '<span style="font-size: 12px; color: #fed7aa;">Совет по банам: ' + escapeHtml(summ.suggested_bans.join(' | ')) + '</span>';
+          }
+          bHtml += '</div>';
+          banner.innerHTML = bHtml;
+          banner.style.display = 'flex';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+
+      // Teams grid
+      const container = document.getElementById('auto-teams-container');
+      if (!container) return;
+
+      if (rad.length === 0 && dire.length === 0 && unassigned.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center; background: #161b22; border-radius: 8px;">⏳ Ожидание лобби... Радар слушает GSI, консоль и буфер обмена в реальном времени.<br><span style="font-size: 11px; color: #8b949e;">Как только начнется стадия выбора героев, выписки по союзникам и противникам появятся здесь автоматически.</span></div>';
+        return;
+      }
+
+      let html = '<div class="teams-container">';
+
+      // Radiant
+      html += '<div class="team-column" style="border-left: 4px solid var(--radiant);">';
+      html += '  <div class="team-header">';
+      html += '    <div class="team-title-rad">🟢 RADIANT (' + rad.length + ' игр.)</div>';
+      html += '    <span style="font-size: 11px; color: var(--text-muted);">Свет</span>';
+      html += '  </div>';
+      if (rad.length === 0) {
+        html += '  <div style="color: var(--text-muted); font-size: 12px; font-style: italic; padding: 10px;">Ожидание игроков Radiant...</div>';
+      } else {
+        rad.forEach(p => { html += renderPlayerCard(p); });
+      }
+      html += '</div>';
+
+      // Dire
+      html += '<div class="team-column" style="border-left: 4px solid var(--dire);">';
+      html += '  <div class="team-header">';
+      html += '    <div class="team-title-dire">🔴 DIRE (' + dire.length + ' игр.)</div>';
+      html += '    <span style="font-size: 11px; color: var(--text-muted);">Тьма</span>';
+      html += '  </div>';
+      if (dire.length === 0) {
+        html += '  <div style="color: var(--text-muted); font-size: 12px; font-style: italic; padding: 10px;">Ожидание игроков Dire...</div>';
+      } else {
+        dire.forEach(p => { html += renderPlayerCard(p); });
+      }
+      html += '</div>';
+
+      html += '</div>';
+
+      // Unassigned
+      if (unassigned.length > 0) {
+        html += '<div class="team-column" style="margin-top: 12px; border-left: 4px solid #94a3b8;">';
+        html += '  <div class="team-header">';
+        html += '    <div class="team-title-un">⚪ Обнаруженные игроки лобби (' + unassigned.length + ')</div>';
+        html += '    <span style="font-size: 11px; color: var(--text-muted);">Команда уточняется</span>';
+        html += '  </div>';
+        html += '  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">';
+        unassigned.forEach(p => { html += renderPlayerCard(p); });
+        html += '  </div>';
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+    }
+
     setInterval(updateBoard, 1500);
     updateBoard();
   </script>
@@ -623,8 +971,17 @@ class H(BaseHTTPRequestHandler):
         if path == "/api/scout":
             qs = urllib.parse.parse_qs(parsed.query)
             players_input = qs.get("players", [""])[0]
-            res = scout_engine.scout_lobby(players_input)
+            if not players_input.strip():
+                mgr = auto_scout.get_scout_manager()
+                res = mgr.get_lobby_state()
+            else:
+                res = scout_engine.scout_lobby(players_input)
             self._send(200, json.dumps(res, ensure_ascii=False), "application/json; charset=utf-8")
+            return
+
+        if path == "/api/lobby":
+            mgr = auto_scout.get_scout_manager()
+            self._send(200, json.dumps(mgr.get_lobby_state(), ensure_ascii=False), "application/json; charset=utf-8")
             return
 
         if path in ("/", "/board", "/index.html"):

@@ -137,6 +137,9 @@ def main():
                     else:
                         log("EVENT: стадия -> %s (герой %s, время %s)" % (stage, g["hero"], g["clock"]))
                     last_stage = stage
+                    if stage == "DOTA_GAMERULES_STATE_HERO_SELECTION":
+                        log("EVENT: СТАДИЯ ВЫБОРА ГЕРОЕВ (Радар лобби и смурф-детектор активны)")
+                        notify("Выбор героев", "Радар лобби активен! Проверяю смурфов и сигнатурки игроков.")
                     if stage in ("DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",) and match_start is None:
                         match_start = time.time()
                         log("EVENT: МАТЧ НАЧАЛСЯ (%s)" % g["hero"])

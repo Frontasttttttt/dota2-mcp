@@ -209,8 +209,25 @@ def t_scout_player(account_id):
     return res
 
 
-def t_scout_lobby(players):
+def t_scout_lobby(players=None):
+    import auto_scout
     import scout_engine
+
+    if not players or str(players).strip().lower() in ("auto", "live", "current"):
+        mgr = auto_scout.get_scout_manager()
+        st = mgr.get_lobby_state()
+        if st.get("total_players", 0) > 0:
+            st["текст"] = mgr.fmt_lobby_report()
+            return st
+        # Если лобби пока пустое, но есть сохраненный аккаунт — покажем его
+        aid = C.CFG.get("account_id")
+        if aid:
+            res = scout_engine.scout_lobby(str(aid))
+            if res.get("ok"):
+                res["текст"] = "ℹ️ Активное лобби пока пустое (ожидание драфта). Твой профиль:\n" + scout_engine.fmt_lobby_report(res)
+            return res
+        return {"ok": False, "error": "Лобби не обнаружено. Зайди в матч или передай ID: scout 12345678"}
+
     res = scout_engine.scout_lobby(players)
     if res.get("ok"):
         res["текст"] = scout_engine.fmt_lobby_report(res)

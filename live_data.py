@@ -8,6 +8,7 @@ import time
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
 import dota_core as C
+import auto_scout
 
 HEROES = {}
 try:
@@ -192,39 +193,26 @@ def build_board():
             pass
     board["events"] = last[-8:] if last else ["Матч идёт, событий пока нет"]
 
-    # Игроки из OpenDota (если доступны)
-    players = []
-    src = "gsi-only"
-    if mid not in ("0", "", None):
-        live, _ = C.http_get_json("%s/live" % C.CFG.get("opendota_base"), timeout=5)
-        found = None
-        try:
-            for m in live or []:
-                if str(m.get("match_id")) == mid:
-                    found = m
-                    break
-        except Exception:
-            pass
-        if found:
-            src = "opendota-live"
-            board["live_meta"] = {
-                "avg_mmr": found.get("average_mmr"),
-                "delay": found.get("delay"),
-                "radiant_lead": found.get("radiant_lead"),
-            }
-            for p in found.get("players") or []:
-                players.append({
-                    "account_id": p.get("account_id"),
-                    "hero": hero_name(p.get("hero_id")),
-                    "hero_id": p.get("hero_id"),
-                    "team": "radiant" if p.get("team") == 0 else "dire",
-                    "slot": p.get("team_slot"),
-                })
-        else:
-            # Не спамим деталями матча на каждом тике, если это live
-            src = "gsi-local"
+    # Автоматическая разведка лобби и смурф-радар (GSI + OpenDota Live + Console)
+    scout_mgr = auto_scout.get_scout_manager()
+    scout_mgr.update_from_gsi(data)
+    lobby_state = scout_mgr.get_lobby_state()
+    board["lobby_scout"] = lobby_state
 
-    board["players_src"] = src
+    # Игроки для обратной совместимости
+    players = []
+    for team_key in ("radiant", "dire", "unassigned"):
+        for p in lobby_state.get(team_key, []):
+            players.append({
+                "account_id": p.get("account_id"),
+                "name": p.get("name"),
+                "hero": p.get("hero_name") or hero_name(p.get("hero_id")),
+                "hero_id": p.get("hero_id"),
+                "team": p.get("team"),
+                "slot": p.get("slot"),
+            })
+
+    board["players_src"] = "auto_scout"
     board["players"] = players
     return board
 
