@@ -198,3 +198,20 @@ def t_stratz_match(match_id):
             "игроки": [{"hero": p.get("heroId"),
                         "kda": "%s/%s/%s" % (p.get("kills"), p.get("deaths"), p.get("assists"))}
                        for p in (m.get("players") or [])]}
+
+
+
+def t_scout_player(account_id):
+    import scout_engine
+    res = scout_engine.scout_player(account_id)
+    if res.get("ok"):
+        res["текст"] = scout_engine.fmt_player_scout(res)
+    return res
+
+
+def t_scout_lobby(players):
+    import scout_engine
+    res = scout_engine.scout_lobby(players)
+    if res.get("ok"):
+        res["текст"] = scout_engine.fmt_lobby_report(res)
+    return res

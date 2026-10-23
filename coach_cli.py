@@ -1,8 +1,8 @@
 """Консольный тренер без Claude Desktop. Stdlib-only.
 Запуск:  python coach_cli.py
 Команды: help, gsi, tip [герой] [минута], pick sniper riki, item invoker,
-         profile, recent [N], match <id>, live, watch [сек], hero <hero_id>,
-         launch [training], account <id>, quit
+         scout [id...], profile, recent [N], match <id>, live, watch [сек],
+         hero <hero_id>, launch [training], account <id>, quit
 """
 import io
 import sys
@@ -25,6 +25,7 @@ HELP = """Команды:
   watch [сек]          - LIVE каждые N сек (по умолч. 5): тик + дельты + вердикт
   tip [герой] [минута] - совет тренера (без аргументов = по живой игре)
   pick <враги...>      - глубокий контрпик (все 124+ героя, сленг: pick сф од или pick sniper riki)
+  scout [id...]        - разведка игроков / смурф-радар (проверка на смурфа, винрейт, недавние герои)
   item <герой>         - закуп, напр: item invoker
   profile              - твой OpenDota-профиль
   recent [N]           - последние матчи
@@ -122,6 +123,19 @@ def main():
             show(B.t_coach_tip(hero, minute))
         elif cmd == "pick":
             res = B.t_pick_advice(args)
+            if res.get("текст"):
+                print(res["текст"])
+            else:
+                show(res)
+        elif cmd == "scout":
+            if not args:
+                aid = C.CFG.get("account_id")
+                if aid:
+                    args = [str(aid)]
+                else:
+                    print("Нужно: scout <account_id... или ссылки/текст>")
+                    continue
+            res = B.t_scout_lobby(" ".join(args))
             if res.get("текст"):
                 print(res["текст"])
             else:

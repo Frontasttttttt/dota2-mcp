@@ -3,7 +3,7 @@
 A Valve Anti-Cheat (VAC) safe assistant powered by the Model Context Protocol (MCP): real-time Game State Integration (GSI) + OpenDota & STRATZ analytics + automated coach tips. Zero paid LLM token cost: runs 100% locally with free OpenDota APIs and local Python algorithmic engines.
 
 > [!IMPORTANT]
-> **100% VAC-Safe:** Does NOT automate gameplay, does NOT control the hero, and does NOT intercept player inputs. Completely read-only analytics assistant.
+> **100% VAC-Safe:** Does NOT automate gameplay, does NOT control the hero, does NOT inject into game memory, and does NOT intercept player inputs. Completely read-only analytics assistant.
 
 ---
 
@@ -11,11 +11,12 @@ A Valve Anti-Cheat (VAC) safe assistant powered by the Model Context Protocol (M
 
 - `server.py` — MCP server implementation (stdio, Python standard library only, zero pip dependencies)
 - `gsi_server.py` — Local HTTP receiver for Dota 2 Game State Integration (`http://127.0.0.1:3000`)
+- `scout_engine.py` — Draft scout & smurf radar: checks allies and opponents for smurfing/boosting indicators, recent hero pools, winrates, and tactical ban advice
 - `draft_engine.py` — Full draft analysis and counter-pick engine for all 124+ heroes, with slang recognition, advantage metrics, damage/disable breakdown, and item recommendations
 - `postgame_analyzer.py` — Deep post-match algorithmic analyzer (KDA ratio, kill participation, damage shares, itemization audit vs enemy lineup, mistakes and strengths)
-- `live_board.py` — Modern Live HUD 2.0 web dashboard (`http://127.0.0.1:8081`): dark glassmorphism, no page reload, active map timers (Lotus, Wisdom, Tormentor, Day/Night), base buildings grid, and live draft calculator
+- `live_board.py` — Modern Live HUD 2.0 web dashboard (`http://127.0.0.1:8081`): dark glassmorphism, no page reload, active map timers (Lotus, Wisdom, Tormentor, Day/Night), base buildings grid, interactive draft calculator, and lobby scout radar
 - `live_data.py` — Live data aggregation and timer computation
-- `coach_cli.py` — Interactive terminal coach with instant access to live game status, draft counter-picking, and match reviews
+- `coach_cli.py` — Interactive terminal coach with instant access to live game status, draft counter-picking, lobby scouting, and match reviews
 - `config.json` — Configurable account ID, Steam/Dota installation paths, and GSI port
 - `tools/install_gsi.py` — Automatic installer for the GSI configuration file into Dota 2 directories
 
@@ -70,6 +71,8 @@ Restart your MCP client. All `dota_*` tools will be available immediately.
 | `dota_set_account` / `dota_whoami` | Sets or displays the active OpenDota account ID |
 | `dota_profile` | Retrieves OpenDota profile info: estimated MMR, win rate, signature heroes |
 | `dota_recent_matches` | Lists recent matches with stats, hero picks, and win/loss results |
+| `dota_scout_player` | Dossier on a player: smurf risk, recent winrate, top heroes played, and ban advice |
+| `dota_scout_lobby` | Scans up to 10 players in parallel from IDs, URLs, or console text |
 | `dota_match_details` | Deep post-game breakdown: KDA, kill participation, damage shares, itemization audit |
 | `dota_hero_stats` | Hero performance analytics and win rates |
 | `dota_coach_tip` | Context-aware coaching advice for the current game state or hero |

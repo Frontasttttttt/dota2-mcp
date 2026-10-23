@@ -39,6 +39,10 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {}}},
     {"name": "dota_pick_advice", "description": "Глубокий драфт-анализ и контрпики против 1-5 врагов (все 124+ героя, сленг, статистика OpenDota, аудит урона/контроля/пассивок, шмотки).",
      "inputSchema": {"type": "object", "properties": {"enemies": {"type": ["array", "string"], "items": {"type": "string"}}}}},
+    {"name": "dota_scout_player", "description": "Разведка игрока и смурф-радар (ранг, винрейт формы, пул недавних героев, проверка на смурфа/бустера, рекомендации).",
+     "inputSchema": {"type": "object", "properties": {"account_id": {"type": ["integer", "string"]}}, "required": ["account_id"]}},
+    {"name": "dota_scout_lobby", "description": "Разведка всех игроков лобби (до 10 игроков): парсит account_id, ссылки на профили или вывод консоли status, проверяет смурфов и пулы героев.",
+     "inputSchema": {"type": "object", "properties": {"query": {"type": ["string", "array"]}}, "required": ["query"]}},
     {"name": "dota_item_guide", "description": "Билд на героя по стадиям игры.",
      "inputSchema": {"type": "object", "properties": {"hero": {"type": "string"}}, "required": ["hero"]}},
     {"name": "dota_stratz_match", "description": "Матч через STRATZ GraphQL (при наличии STRATZ_TOKEN).",
@@ -60,6 +64,8 @@ DISPATCH = {
     "dota_live_tick": lambda a: B.t_live_tick(),
     "dota_spectate_live": lambda a: B.t_spectate_live(),
     "dota_pick_advice": lambda a: B.t_pick_advice(a.get("enemies", [])),
+    "dota_scout_player": lambda a: B.t_scout_player(a.get("account_id")),
+    "dota_scout_lobby": lambda a: B.t_scout_lobby(a.get("query") or a.get("players") or ""),
     "dota_item_guide": lambda a: B.t_item_guide(a.get("hero", "")),
     "dota_stratz_match": lambda a: B.t_stratz_match(a.get("match_id")),
 }
@@ -78,7 +84,7 @@ def handle(msg):
 
     if method == "initialize":
         return ok({"protocolVersion": "2024-11-05", "capabilities": {"tools": {}},
-                   "serverInfo": {"name": "dota2-mcp", "version": "1.1.0"}})
+                   "serverInfo": {"name": "dota2-mcp", "version": "1.2.0"}})
     if method in ("notifications/initialized", "notifications/cancelled"):
         return None
     if method == "tools/list":

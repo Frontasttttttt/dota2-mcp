@@ -30,8 +30,6 @@ def call(name, args=None, idx=1):
                 return
     print(name, "NO OUTPUT. stderr:", p.stderr[:500])
 
-call("dota_coach_tip", {"hero": "pudge", "minute": 20}, 1)
+call("dota_scout_player", {"account_id": 1092348748}, 1)
 call("dota_pick_advice", {"enemies": ["sniper", "riki"]}, 2)
 call("dota_match_details", {"match_id": 9054902632}, 3)
-call("dota_gsi_status", {}, 4)
-call("dota_whoami", {}, 5)

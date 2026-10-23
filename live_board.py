@@ -1,5 +1,6 @@
 """live_board.py — Современный Live HUD 2.0 для Dota 2.
-Плавный дашборд без перезагрузки страниц, живые таймеры карты, вышки, байбеки и драфт-калькулятор.
+Плавный дашборд без перезагрузки страниц, живые таймеры карты, вышки, байбеки,
+драфт-калькулятор и разведка лобби / смурф-радар.
 Запуск: python live_board.py -> http://127.0.0.1:8081
 """
 import io
@@ -19,6 +20,7 @@ sys.path.insert(0, BASE)
 import dota_core as C
 import draft_engine
 import live_data as D
+import scout_engine
 
 HOST = "127.0.0.1"
 PORT = 8081
@@ -47,6 +49,8 @@ HTML_PAGE = """<!DOCTYPE html>
       --mana: #38bdf8;
       --hp: #10b981;
       --accent: #818cf8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -83,6 +87,15 @@ HTML_PAGE = """<!DOCTYPE html>
     }
     .badge-live { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; }
     .badge-stale { background: rgba(244, 63, 94, 0.2); border-color: #f43f5e; color: #f43f5e; }
+    .badge-danger { background: rgba(239, 68, 68, 0.25); border-color: #ef4444; color: #f87171; animation: pulse-danger 2s infinite; }
+    .badge-warn { background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; }
+    .badge-norm { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; }
+    .badge-tilt { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8; }
+
+    @keyframes pulse-danger {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.6); }
+    }
     
     .score-banner {
       display: flex;
@@ -159,10 +172,11 @@ HTML_PAGE = """<!DOCTYPE html>
     .event-feed { max-height: 160px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
     .event-item { padding: 6px 10px; background: #161b22; border-radius: 6px; border-left: 3px solid var(--accent); }
 
-    /* Draft Counter Calculator */
-    .draft-box { display: flex; gap: 10px; margin-bottom: 12px; }
+    /* Input & Buttons */
+    .draft-box { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
     .draft-input {
       flex: 1;
+      min-width: 250px;
       background: #0d1117;
       border: 1px solid var(--card-border);
       border-radius: 8px;
@@ -182,6 +196,34 @@ HTML_PAGE = """<!DOCTYPE html>
     }
     .draft-btn:hover { background: #4338ca; }
     .draft-results { font-size: 13px; }
+
+    /* Scout Cards Grid */
+    .scout-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; margin-top: 10px; }
+    .scout-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+    .scout-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .scout-card-name { font-weight: 700; font-size: 15px; color: #fff; }
+    .scout-card-rank { font-size: 12px; color: var(--gold); }
+    .hero-chip {
+      display: inline-block;
+      padding: 2px 7px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      font-size: 11px;
+      margin-right: 4px;
+      margin-top: 3px;
+    }
+    .hero-chip-good { border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
+    .hero-chip-bad { border-color: rgba(244, 63, 94, 0.4); color: #f87171; }
   </style>
 </head>
 <body>
@@ -301,6 +343,23 @@ HTML_PAGE = """<!DOCTYPE html>
           <div class="event-item">Ожидание событий матча...</div>
         </div>
       </div>
+    </div>
+
+    <!-- Scout & Smurf Radar Panel -->
+    <div class="card">
+      <div class="card-title">
+        <span>🕵️ Разведка лобби и Смурф-радар (Pick Phase Scout)</span>
+        <span class="badge" style="background: rgba(129, 140, 248, 0.2); border-color: #818cf8; color: #818cf8;">100% VAC-Safe | 0 токенов</span>
+      </div>
+      <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Мгновенная выписка по союзникам и противникам: проверка на потенциального смурфа/бустера, винрейт формы, пул недавних героев и советы по банам.
+      </div>
+      <div class="draft-box">
+        <input type="text" id="scout-input" class="draft-input" placeholder="Введи Account ID, SteamID64, ссылки OpenDota/Dotabuff или вставь текст из консоли status...">
+        <button class="draft-btn" style="background: #2563eb;" onclick="runScout()">Просканировать лобби</button>
+        <button class="draft-btn" style="background: #374151;" onclick="scoutSelf()">Мой профиль</button>
+      </div>
+      <div id="scout-output"></div>
     </div>
 
     <!-- Draft Counter Tool Inline -->
@@ -459,6 +518,71 @@ HTML_PAGE = """<!DOCTYPE html>
       }
     }
 
+    async function runScout() {
+      const inp = document.getElementById('scout-input').value.trim();
+      if (!inp) return;
+      const out = document.getElementById('scout-output');
+      out.innerHTML = '<div style="color: var(--gold); padding: 10px;">🔍 Сканирую игроков лобби и проверяю смурфов...</div>';
+      try {
+        const res = await fetch('/api/scout?players=' + encodeURIComponent(inp));
+        const data = await res.json();
+        if (!data.ok) {
+          out.innerHTML = '<div style="color: var(--dire); padding: 10px;">' + (data.error || 'Ошибка сканирования') + '</div>';
+          return;
+        }
+
+        let html = '<div class="scout-grid">';
+        data.players.forEach(p => {
+          if (!p.ok) {
+            html += '<div class="scout-card" style="border-color: #f43f5e;"><strong style="color: #f87171;">ID ' + p.account_id + '</strong><div style="font-size: 12px; color: #8b949e;">' + (p.error || 'Профиль закрыт') + '</div></div>';
+            return;
+          }
+          const v = p.smurf_verdict || {};
+          const s = p.recent_summary || {};
+          
+          let bClass = 'badge-norm';
+          if (v.class === 'danger') bClass = 'badge-danger';
+          else if (v.class === 'warning') bClass = 'badge-warn';
+          else if (v.class === 'tilt') bClass = 'badge-tilt';
+
+          html += '<div class="scout-card">';
+          html += '<div class="scout-card-header">';
+          html += '<div><div class="scout-card-name">' + p.name + '</div><div class="scout-card-rank">' + p.rank_name + ' (ID: ' + p.account_id + ')</div></div>';
+          html += '<span class="badge ' + bClass + '">' + v.badge + '</span>';
+          html += '</div>';
+
+          html += '<div style="font-size: 13px; color: #e6edf3; margin-top: 4px;">';
+          html += 'Форма: <strong>' + s.wins + 'W - ' + s.losses + 'L</strong> (' + s.winrate_pct + '% WR) | KDA: ' + s.avg_kda;
+          html += '</div>';
+
+          html += '<div style="margin-top: 4px;">';
+          (p.recent_heroes || []).slice(0, 3).forEach(h => {
+            const hClass = h.winrate_pct >= 60 ? 'hero-chip-good' : (h.winrate_pct <= 40 ? 'hero-chip-bad' : '');
+            html += '<span class="hero-chip ' + hClass + '">' + h.hero_name + ' ' + h.winrate_pct + '% (' + h.games + ')</span>';
+          });
+          html += '</div>';
+
+          if (v.triggers && v.triggers.length > 0) {
+            html += '<div style="font-size: 11px; color: #f59e0b; margin-top: 4px;">' + v.triggers.join('<br>') + '</div>';
+          }
+          if (v.tips && v.tips.length > 0) {
+            html += '<div style="font-size: 11px; color: #818cf8; margin-top: 4px;">💡 ' + v.tips.join('<br>') + '</div>';
+          }
+
+          html += '</div>';
+        });
+        html += '</div>';
+        out.innerHTML = html;
+      } catch (err) {
+        out.innerHTML = '<div style="color: var(--dire); padding: 10px;">Ошибка связи с сервером разведки</div>';
+      }
+    }
+
+    function scoutSelf() {
+      document.getElementById('scout-input').value = '1092348748';
+      runScout();
+    }
+
     setInterval(updateBoard, 1500);
     updateBoard();
   </script>
@@ -496,6 +620,13 @@ class H(BaseHTTPRequestHandler):
             self._send(200, json.dumps(res, ensure_ascii=False), "application/json; charset=utf-8")
             return
 
+        if path == "/api/scout":
+            qs = urllib.parse.parse_qs(parsed.query)
+            players_input = qs.get("players", [""])[0]
+            res = scout_engine.scout_lobby(players_input)
+            self._send(200, json.dumps(res, ensure_ascii=False), "application/json; charset=utf-8")
+            return
+
         if path in ("/", "/board", "/index.html"):
             self._send(200, HTML_PAGE)
             return
@@ -507,7 +638,7 @@ def main():
     C.track_tick()
     srv = HTTPServer((HOST, PORT), H)
     print("Dota 2 Live HUD 2.0 запущен: http://%s:%d" % (HOST, PORT), flush=True)
-    print("Открой в браузере. Данные обновляются плавно без перезагрузки страницы.", flush=True)
+    print("Открой в браузере. Разведка лобби и смурф-радар активны.", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
