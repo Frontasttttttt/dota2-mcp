@@ -82,15 +82,24 @@ def notify(title, msg):
             "[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType=WindowsRuntime]::new($doc))"
         ) % (t, m)
         subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-                        "-Command", ps], capture_output=True, timeout=15)
+                        "-Command", ps], capture_output=True, timeout=15, creationflags=0x08000000)
     except Exception:
         pass
 
 
 def dota_running():
     try:
+        import psutil
+        for p in psutil.process_iter(['name']):
+            name = p.info.get('name')
+            if name and name.lower() == 'dota2.exe':
+                return True
+        return False
+    except Exception:
+        pass
+    try:
         out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq dota2.exe", "/FO", "CSV", "/NH"],
-                             capture_output=True, timeout=10)
+                             capture_output=True, timeout=5, creationflags=0x08000000)
         txt = (out.stdout or b"").decode("utf-8", "replace").lower()
         return "dota2.exe" in txt
     except Exception:
