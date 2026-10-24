@@ -574,7 +574,40 @@ HTML_PAGE = """<!DOCTYPE html>
 
         // Status
         const age = b.gsi_age_sec;
-        const isFresh = age >= 0 && age < 6;
+        const isFresh = age >= 0 && age < 10;
+        if (!isFresh) {
+          document.getElementById('badge-status').textContent = '💤 В МЕНЮ ДОТЫ';
+          document.getElementById('badge-status').className = 'badge badge-stale';
+          document.getElementById('game-stage').textContent = 'В главном меню';
+          document.getElementById('game-clock').textContent = '--:--';
+          document.getElementById('match-id').textContent = '-';
+          document.getElementById('score-radiant').textContent = '-';
+          document.getElementById('score-dire').textContent = '-';
+          document.getElementById('hero-name').textContent = 'Вне матча';
+          document.getElementById('player-name').textContent = 'Ожидание выбора героев / матча...';
+          document.getElementById('hero-lvl').textContent = '';
+          document.getElementById('hp-text').textContent = '- / -';
+          document.getElementById('hp-bar').style.width = '0%';
+          document.getElementById('mp-text').textContent = '- / -';
+          document.getElementById('mp-bar').style.width = '0%';
+          document.getElementById('kda-val').textContent = '-/-/-';
+          document.getElementById('cs-val').textContent = '- / -';
+          document.getElementById('gold-val').textContent = '-';
+          document.getElementById('gpm-val').textContent = '- / -';
+          document.getElementById('bb-status').textContent = '⚪ Вне матча';
+          document.getElementById('bb-status').style.color = 'var(--text-muted)';
+          document.getElementById('timer-lotus').textContent = '--:--';
+          document.getElementById('timer-wisdom').textContent = '--:--';
+          document.getElementById('timer-tormentor').textContent = 'Старт на 20:00';
+          document.getElementById('timer-cycle').textContent = '--:--';
+          document.getElementById('tempo-1m').textContent = '-';
+          document.getElementById('tempo-5m').textContent = '-';
+          document.getElementById('tempo-verdict').textContent = '';
+          if (b.lobby_scout) {
+            updateLobbyDisplay(b.lobby_scout);
+          }
+          return;
+        }
         document.getElementById('badge-status').textContent = isFresh ? 'LIVE' : 'GSI ' + age + 'с';
         document.getElementById('badge-status').className = 'badge ' + (isFresh ? 'badge-live' : 'badge-stale');
         
