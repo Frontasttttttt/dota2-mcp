@@ -30,51 +30,98 @@ def hero_name(hid):
 
 
 def compute_map_timers(clock_sec):
-    """Вычисляет таймеры карты: руны мудрости, лотусы, торментор, день/ночь."""
+    """Вычисляет таймеры карты по актуальным правилам Dota 2:
+    - Баунти руны: с 00:00 и каждые 4 минуты (240 сек)
+    - Лотусы: каждые 3 минуты (180 сек)
+    - Руны воды: 02:00 и 04:00 (обе точки реки)
+    - Активные руны реки (Щит, Хаста, Иллюзии, ДД, Инвиз, Реген, Аркана): с 06:00 каждые 2 мин (120 сек)
+    - Руны мудрости: каждые 7 минут (420 сек)
+    - Смена дня/ночи и логово Рошана: каждые 5 минут (300 сек)
+    - Терзатель: 20:00 (1200 сек)
+    """
     if clock_sec is None or clock_sec < 0:
         return {
+            "bounty_sec": 240, "bounty_fmt": "04:00",
+            "river_sec": 120, "river_fmt": "02:00", "river_type": "Руны воды (02:00, 04:00)",
             "lotus_sec": 180, "lotus_fmt": "03:00",
             "wisdom_sec": 420, "wisdom_fmt": "07:00",
-            "tormentor_sec": 1200, "tormentor_fmt": "20:00",
+            "roshan_cave": "Юго-Восток (Radiant ☀️)",
+            "roshan_fmt": "05:00",
+            "roshan_status": "Юго-Восток (Radiant ☀️)",
+            "tormentor_sec": 1200, "tormentor_fmt": "20:00", "tormentor_status": "Спавн в 20:00",
             "is_day": True, "day_night_sec": 300, "day_night_fmt": "05:00"
         }
 
     c = int(clock_sec)
 
-    # Лотусы: каждые 3 мин (180 сек)
+    # 1. Баунти руны: каждые 4 мин (240 сек)
+    bounty_rem = 240 - (c % 240) if c >= 0 else 0
+    bounty_fmt = "%02d:%02d" % (bounty_rem // 60, bounty_rem % 60)
+
+    # 2. Лотусы: каждые 3 мин (180 сек)
     lotus_rem = 180 - (c % 180) if c >= 0 else 0
     lotus_fmt = "%02d:%02d" % (lotus_rem // 60, lotus_rem % 60)
 
-    # Руны мудрости: каждые 7 мин (420 сек)
+    # 3. Руны реки: Вода на 2:00 (120s) и 4:00 (240s). Активные руны с 6:00 (360s) каждые 2 мин (120s)
+    if c < 120:
+        river_rem = 120 - c
+        river_type = "Руны воды (обе точки)"
+    elif c < 240:
+        river_rem = 240 - c
+        river_type = "Руны воды (обе точки)"
+    elif c < 360:
+        river_rem = 360 - c
+        river_type = "Первые активные руны реки"
+    else:
+        river_rem = 120 - (c % 120)
+        river_type = "Активная руна реки (каждые 2 мин)"
+    river_fmt = "%02d:%02d" % (river_rem // 60, river_rem % 60)
+
+    # 4. Руны мудрости: каждые 7 мин (420 сек)
     wisdom_rem = 420 - (c % 420) if c >= 0 else 0
     wisdom_fmt = "%02d:%02d" % (wisdom_rem // 60, wisdom_rem % 60)
 
-    # Торментор: спавн на 20:00 (1200 сек)
+    # 5. Смена дня и ночи + Рошан: каждые 5 мин (300 сек).
+    # День: 0-5, 10-15... Рошан в Юго-Восточном логове (Radiant)
+    # Ночь: 5-10, 15-20... Рошан в Северо-Западном логове (Dire)
+    cycle = c // 300
+    is_day = (cycle % 2 == 0)
+    day_rem = 300 - (c % 300)
+    day_fmt = "%02d:%02d" % (day_rem // 60, day_rem % 60)
+    roshan_current_cave = "Юго-Восток (Radiant ☀️)" if is_day else "Северо-Запад (Dire 🌙)"
+    roshan_next_cave = "Dire 🌙" if is_day else "Radiant ☀️"
+    roshan_status = "%s (переход через %s в %s)" % (roshan_current_cave, day_fmt, roshan_next_cave)
+
+    # 6. Терзатель: спавн на 20:00 (1200 сек)
     if c < 1200:
         tormentor_rem = 1200 - c
         tormentor_fmt = "%02d:%02d" % (tormentor_rem // 60, tormentor_rem % 60)
         tormentor_status = "Спавн через %s" % tormentor_fmt
     else:
         tormentor_rem = 0
-        tormentor_status = "Активен (заберите осколок!)"
-
-    # Смена дня и ночи: каждые 5 мин (300 сек). 0:00 - День, 5:00 - Ночь, 10:00 - День...
-    cycle = c // 300
-    is_day = (cycle % 2 == 0)
-    day_rem = 300 - (c % 300)
-    day_fmt = "%02d:%02d" % (day_rem // 60, day_rem % 60)
+        tormentor_fmt = "Активен"
+        tormentor_status = "Активен (осколок Аганима)"
 
     return {
         "clock_sec": c,
+        "bounty_sec": bounty_rem,
+        "bounty_fmt": bounty_fmt,
+        "river_sec": river_rem,
+        "river_fmt": river_fmt,
+        "river_type": river_type,
         "lotus_sec": lotus_rem,
         "lotus_fmt": lotus_fmt,
         "wisdom_sec": wisdom_rem,
         "wisdom_fmt": wisdom_fmt,
-        "tormentor_sec": tormentor_rem,
-        "tormentor_status": tormentor_status,
         "is_day": is_day,
         "day_night_sec": day_rem,
         "day_night_fmt": day_fmt,
+        "roshan_cave": roshan_current_cave,
+        "roshan_fmt": day_fmt,
+        "roshan_status": roshan_status,
+        "tormentor_sec": tormentor_rem,
+        "tormentor_fmt": tormentor_fmt,
+        "tormentor_status": tormentor_status,
     }
 
 

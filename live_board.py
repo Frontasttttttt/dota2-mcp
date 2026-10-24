@@ -449,6 +449,14 @@ HTML_PAGE = """<!DOCTYPE html>
       <div class="card">
         <div class="card-title">Тайминги карты</div>
         <div class="timer-item">
+          <div class="timer-name">🪙 Баунти руны (каждые 4 мин)</div>
+          <div class="timer-val" id="timer-bounty">--:--</div>
+        </div>
+        <div class="timer-item">
+          <div class="timer-name" id="river-label">🌊 Руна реки (Вода / Активная)</div>
+          <div class="timer-val" id="timer-river">--:--</div>
+        </div>
+        <div class="timer-item">
           <div class="timer-name">🪷 Лотусы (каждые 3 мин)</div>
           <div class="timer-val" id="timer-lotus">--:--</div>
         </div>
@@ -457,7 +465,11 @@ HTML_PAGE = """<!DOCTYPE html>
           <div class="timer-val" id="timer-wisdom">--:--</div>
         </div>
         <div class="timer-item">
-          <div class="timer-name">🗿 Торментор (20:00)</div>
+          <div class="timer-name" id="roshan-cave-label">🐉 Рошан (логово)</div>
+          <div class="timer-val" id="timer-roshan" style="font-size: 13px;">--:--</div>
+        </div>
+        <div class="timer-item">
+          <div class="timer-name">🗿 Терзатель (20:00)</div>
           <div class="timer-val" id="timer-tormentor">--:--</div>
         </div>
         <div class="timer-item">
@@ -596,8 +608,11 @@ HTML_PAGE = """<!DOCTYPE html>
           document.getElementById('gpm-val').textContent = '- / -';
           document.getElementById('bb-status').textContent = '⚪ Вне матча';
           document.getElementById('bb-status').style.color = 'var(--text-muted)';
+          document.getElementById('timer-bounty').textContent = '--:--';
+          document.getElementById('timer-river').textContent = '--:--';
           document.getElementById('timer-lotus').textContent = '--:--';
           document.getElementById('timer-wisdom').textContent = '--:--';
+          document.getElementById('timer-roshan').textContent = '--:--';
           document.getElementById('timer-tormentor').textContent = 'Старт на 20:00';
           document.getElementById('timer-cycle').textContent = '--:--';
           document.getElementById('tempo-1m').textContent = '-';
@@ -656,8 +671,12 @@ HTML_PAGE = """<!DOCTYPE html>
 
         // Timers
         const t = b.timers || {};
+        document.getElementById('timer-bounty').textContent = t.bounty_fmt || '--:--';
+        document.getElementById('timer-river').textContent = t.river_fmt || '--:--';
+        if (t.river_type) document.getElementById('river-label').textContent = '🌊 ' + t.river_type;
         document.getElementById('timer-lotus').textContent = t.lotus_fmt || '--:--';
         document.getElementById('timer-wisdom').textContent = t.wisdom_fmt || '--:--';
+        document.getElementById('timer-roshan').textContent = t.roshan_status || t.roshan_cave || '--:--';
         document.getElementById('timer-tormentor').textContent = t.tormentor_status || '--:--';
         document.getElementById('timer-cycle').textContent = t.day_night_fmt || '--:--';
         document.getElementById('cycle-label').textContent = (t.is_day ? '☀️' : '🌙') + ' До смены ' + (t.is_day ? 'ночи' : 'дня');
