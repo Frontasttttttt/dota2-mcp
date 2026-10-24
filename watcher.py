@@ -1,4 +1,5 @@
 import voice_coach
+import threading
 import auto_accept
 """Dota 2 auto-watcher: следит за процессом dota2.exe и состоянием GSI,
 пишет события в watcher_events.log + watcher_state.json. Stdlib-only.
@@ -125,7 +126,46 @@ def gsi_info():
         return None
 
 
+def start_background_servers():
+    """Запускает GSI-приёмник (порт 3000) и Live HUD (порт 8081) в фоновых потоках."""
+    # 1. GSI сервер
+    try:
+        import gsi_server
+        def _run_gsi():
+            try:
+                srv = gsi_server.HTTPServer((gsi_server.HOST, gsi_server.PORT), gsi_server.Handler)
+                log("GSI сервер запущен на http://%s:%d" % (gsi_server.HOST, gsi_server.PORT))
+                srv.serve_forever()
+            except OSError as e:
+                log("GSI сервер порт %d уже занят (возможно запущен отдельно): %s" % (gsi_server.PORT, e))
+            except Exception as e:
+                log("GSI сервер ошибка: %s" % e)
+        t_gsi = threading.Thread(target=_run_gsi, daemon=True, name="GSIServerThread")
+        t_gsi.start()
+    except Exception as e:
+        log("Не удалось запустить GSI сервер: %s" % e)
+
+    # 2. Live HUD 2.0 (локальный сайт)
+    try:
+        import live_board
+        def _run_board():
+            try:
+                live_board.C.track_tick()
+                srv = live_board.HTTPServer((live_board.HOST, live_board.PORT), live_board.H)
+                log("Live HUD 2.0 (локальный сайт) запущен на http://%s:%d" % (live_board.HOST, live_board.PORT))
+                srv.serve_forever()
+            except OSError as e:
+                log("Live HUD порт %d уже занят (возможно запущен отдельно): %s" % (live_board.PORT, e))
+            except Exception as e:
+                log("Live HUD ошибка: %s" % e)
+        t_board = threading.Thread(target=_run_board, daemon=True, name="LiveBoardThread")
+        t_board.start()
+    except Exception as e:
+        log("Не удалось запустить Live HUD: %s" % e)
+
+
 def main():
+    start_background_servers()
     log("watcher старт (опрос каждые %d c)" % POLL)
     was_running = None
     last_stage = None
@@ -142,7 +182,7 @@ def main():
                 was_running = running
                 if running:
                     log("EVENT: Dota 2 ЗАПУЩЕНА")
-                    notify("Dota 2 MCP", "Дота запущена. Слежу за матчем.")
+                    notify("Dota 2 MCP", "Дота запущена. HUD: http://127.0.0.1:8081")
                 else:
                     log("EVENT: Dota 2 ЗАКРЫТА")
                     notify("Dota 2 MCP", "Дота закрыта.")
