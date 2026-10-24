@@ -40,6 +40,22 @@ def save_state(obj):
         pass
 
 
+def play_voice(filename):
+    """Plays Drow Ranger voice line in background (0 tokens cost)."""
+    try:
+        paths = [
+            os.path.join(r"C:\AI\desktop-control", filename),
+            os.path.join(r"C:\AI\desktop-control\voices_drow", filename)
+        ]
+        target = next((p for p in paths if os.path.exists(p)), None)
+        if target:
+            sys.path.insert(0, r"C:\AI\desktop-control")
+            import audio
+            audio.play_audio(target)
+    except Exception:
+        pass
+
+
 def notify(title, msg):
     """Windows-тост без модулей. Тихо игнорирует ошибки."""
     try:
@@ -140,15 +156,18 @@ def main():
                     if stage == "DOTA_GAMERULES_STATE_HERO_SELECTION":
                         log("EVENT: СТАДИЯ ВЫБОРА ГЕРОЕВ (Радар лобби и смурф-детектор активны)")
                         notify("Выбор героев", "Радар лобби активен! Проверяю смурфов и сигнатурки игроков.")
+                        play_voice("dro_spawn_02_ru.mp3")
                     if stage in ("DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",) and match_start is None:
                         match_start = time.time()
                         log("EVENT: МАТЧ НАЧАЛСЯ (%s)" % g["hero"])
                         notify("Матч начался", "%s — удачи! Напиши мне «что там?» для совета." % g["hero"].replace("npc_dota_hero_", ""))
+                        play_voice("drow_battlebegins_01_ru.mp3")
                     if stage in ("DOTA_GAMERULES_STATE_POST_GAME", "DOTA_GAMERULES_STATE_GAME_OVER") and match_start:
                         dur = int((time.time() - match_start) / 60)
                         log("EVENT: МАТЧ ЗАКОНЧЕН (%s, KDA %s, длился ~%d мин)" % (g["hero"], g["kda"], dur))
                         notify("Матч окончен", "%s, KDA %s, ~%d мин. Напиши мне для разбора!" % (
                             g["hero"].replace("npc_dota_hero_", ""), g["kda"], dur))
+                        play_voice("dro_inthebag_01_ru.mp3")
                         match_start = None
                 if g and fresh and g["hero"] != last_hero and g["hero"] != "?":
                     last_hero = g["hero"]
