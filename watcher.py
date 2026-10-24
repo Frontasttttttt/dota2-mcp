@@ -13,7 +13,8 @@ import sys
 import time
 
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    if sys.stdout is not None and hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except Exception:
     pass
 
@@ -26,7 +27,11 @@ POLL = 2
 
 def log(msg):
     line = "%s %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg)
-    print(line, flush=True)
+    if sys.stdout is not None:
+        try:
+            print(line, flush=True)
+        except Exception:
+            pass
     try:
         with open(LOG, "a", encoding="utf-8") as f:
             f.write(line + "\n")
