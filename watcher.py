@@ -1,3 +1,5 @@
+import voice_coach
+import auto_accept
 """Dota 2 auto-watcher: следит за процессом dota2.exe и состоянием GSI,
 пишет события в watcher_events.log + watcher_state.json. Stdlib-only.
 Запуск: python watcher.py  (можно свернуть/в фон)
@@ -156,22 +158,32 @@ def main():
                     if stage == "DOTA_GAMERULES_STATE_HERO_SELECTION":
                         log("EVENT: СТАДИЯ ВЫБОРА ГЕРОЕВ (Радар лобби и смурф-детектор активны)")
                         notify("Выбор героев", "Радар лобби активен! Проверяю смурфов и сигнатурки игроков.")
-                        play_voice("dro_spawn_02_ru.mp3")
+                        voice_coach.coach.on_game_start()
                     if stage in ("DOTA_GAMERULES_STATE_GAME_IN_PROGRESS",) and match_start is None:
                         match_start = time.time()
                         log("EVENT: МАТЧ НАЧАЛСЯ (%s)" % g["hero"])
                         notify("Матч начался", "%s — удачи! Напиши мне «что там?» для совета." % g["hero"].replace("npc_dota_hero_", ""))
-                        play_voice("drow_battlebegins_01_ru.mp3")
+                        voice_coach.coach.on_game_start()
                     if stage in ("DOTA_GAMERULES_STATE_POST_GAME", "DOTA_GAMERULES_STATE_GAME_OVER") and match_start:
                         dur = int((time.time() - match_start) / 60)
                         log("EVENT: МАТЧ ЗАКОНЧЕН (%s, KDA %s, длился ~%d мин)" % (g["hero"], g["kda"], dur))
                         notify("Матч окончен", "%s, KDA %s, ~%d мин. Напиши мне для разбора!" % (
                             g["hero"].replace("npc_dota_hero_", ""), g["kda"], dur))
-                        play_voice("dro_inthebag_01_ru.mp3")
+                        voice_coach.coach.on_victory()
                         match_start = None
                 if g and fresh and g["hero"] != last_hero and g["hero"] != "?":
                     last_hero = g["hero"]
                     log("Герой: %s" % g["hero"])
+
+                # Live Cute Voice Timers (Bounty, Wisdom, River runes)
+                if g and fresh and stage == "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS" and isinstance(g.get("clock"), (int, float)):
+                    voice_coach.coach.check_timers(int(g["clock"]))
+
+                # Auto-Accept match if in menu/queue
+                if not (g and fresh and stage in ("DOTA_GAMERULES_STATE_GAME_IN_PROGRESS", "DOTA_GAMERULES_STATE_HERO_SELECTION")):
+                    if auto_accept.try_accept_match():
+                        log("EVENT: МАТЧ АВТО-ПРИНЯТ!")
+                        notify("Dota 2 Auto-Accept", "Матч найден и успешно принят! ✅")
                 save_state({"dota_running": True, "gsi_fresh": fresh,
                             "stage": stage if (g and fresh) else None,
                             "hero": (g["hero"] if g else None), "ts": time.time()})
