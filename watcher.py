@@ -231,7 +231,9 @@ def main():
 
                 # Live Cute Voice Timers (Bounty, Wisdom, River runes)
                 if g and fresh and stage == "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS" and isinstance(g.get("clock"), (int, float)):
-                    voice_coach.coach.check_timers(int(g["clock"]))
+                    cue = voice_coach.coach.check_timers(int(g["clock"]))
+                    if cue:
+                        log("EVENT: ОЗВУЧКА -> %s (время матча %d)" % (cue, int(g["clock"])))
 
                 # Auto-Accept match if in menu/queue
                 if not (g and fresh and stage in ("DOTA_GAMERULES_STATE_GAME_IN_PROGRESS", "DOTA_GAMERULES_STATE_HERO_SELECTION")):
