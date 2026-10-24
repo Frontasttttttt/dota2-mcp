@@ -115,6 +115,7 @@ HTML_PAGE = """<!DOCTYPE html>
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     @media (max-width: 850px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
     
+    .order-top { order: -1 !important; }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -521,7 +522,7 @@ HTML_PAGE = """<!DOCTYPE html>
     </div>
 
     <!-- Scout & Smurf Radar Panel -->
-    <div class="card">
+    <div class="card" id="scout-panel-card">
       <div class="card-title">
         <span>⚔️ Радар Лобби: Союзники vs Противники (Pick Phase & Live Scout)</span>
         <span class="badge" id="lobby-status-badge" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">📡 Авто-поиск активен</span>
@@ -714,6 +715,21 @@ HTML_PAGE = """<!DOCTYPE html>
         // Auto Lobby Scout
         if (b.lobby_scout) {
           updateLobbyDisplay(b.lobby_scout);
+        }
+
+        const scoutCard = document.getElementById('scout-panel-card');
+        const isPickPhase = (b.stage === 'DOTA_GAMERULES_STATE_HERO_SELECTION');
+        if (scoutCard) {
+          if (isPickPhase) {
+            scoutCard.classList.add('order-top');
+            scoutCard.style.border = '2px solid #818cf8';
+            document.getElementById('lobby-status-badge').textContent = '⚔️ ВЫБОР ГЕРОЕВ: РАДАР НА ПЕРВОМ МЕСТЕ';
+            document.getElementById('lobby-status-badge').style.borderColor = '#818cf8';
+            document.getElementById('lobby-status-badge').style.color = '#a5b4fc';
+          } else {
+            scoutCard.classList.remove('order-top');
+            scoutCard.style.border = '1px solid var(--card-border)';
+          }
         }
       } catch (err) {
         console.error('Update error:', err);
