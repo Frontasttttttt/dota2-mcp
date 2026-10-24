@@ -141,7 +141,37 @@ namespace DotaOverlay.Wpf.Models
         public List<PlayerScout> Unassigned { get; set; } = new();
 
         [JsonPropertyName("summary")]
-        public object? Summary { get; set; }
+        public LobbySummary? Summary { get; set; }
+    }
+
+    public class LobbySummary
+    {
+        [JsonPropertyName("suggested_bans")]
+        public List<string> SuggestedBans { get; set; } = new();
+    }
+
+    public class RecentSummary
+    {
+        [JsonPropertyName("winrate_pct")]
+        public double WinratePct { get; set; }
+
+        [JsonPropertyName("wins")]
+        public int Wins { get; set; }
+
+        [JsonPropertyName("losses")]
+        public int Losses { get; set; }
+
+        [JsonPropertyName("avg_kda")]
+        public double AvgKda { get; set; }
+    }
+
+    public class SmurfVerdict
+    {
+        [JsonPropertyName("badge")]
+        public string Badge { get; set; } = "";
+
+        [JsonPropertyName("tips")]
+        public List<string> Tips { get; set; } = new();
     }
 
     public class PlayerScout
@@ -150,7 +180,7 @@ namespace DotaOverlay.Wpf.Models
         public string Name { get; set; } = "Player";
 
         [JsonPropertyName("account_id")]
-        public string AccountId { get; set; } = "";
+        public object? AccountId { get; set; }
 
         [JsonPropertyName("rank_name")]
         public string RankName { get; set; } = "Unranked";
@@ -161,8 +191,11 @@ namespace DotaOverlay.Wpf.Models
         [JsonPropertyName("threat_title")]
         public string ThreatTitle { get; set; } = "ОБЫЧНЫЙ ИГРОК";
 
-        [JsonPropertyName("threat_reasons")]
-        public List<string> ThreatReasons { get; set; } = new();
+        [JsonPropertyName("recent_summary")]
+        public RecentSummary? RecentSummary { get; set; }
+
+        [JsonPropertyName("smurf_verdict")]
+        public SmurfVerdict? SmurfVerdict { get; set; }
 
         [JsonPropertyName("winrate_pct")]
         public double WinratePct { get; set; }
@@ -178,6 +211,31 @@ namespace DotaOverlay.Wpf.Models
 
         [JsonPropertyName("ban_advice")]
         public string? BanAdvice { get; set; }
+
+        // Presentation helpers for XAML with empty setters for TwoWay compatibility
+        public string DisplayBadge
+        {
+            get => !string.IsNullOrEmpty(SmurfVerdict?.Badge) ? SmurfVerdict.Badge : (ThreatTitle ?? "🟢 ОБЫЧНЫЙ");
+            set { }
+        }
+
+        public string DisplayWinrate
+        {
+            get => RecentSummary != null ? $"{RecentSummary.WinratePct:F0}%" : $"{WinratePct:F0}%";
+            set { }
+        }
+
+        public string DisplayKda
+        {
+            get => RecentSummary != null ? $"{RecentSummary.AvgKda:F1}" : $"{AvgKda:F1}";
+            set { }
+        }
+
+        public string DisplayWinLoss
+        {
+            get => RecentSummary != null ? $"{RecentSummary.Wins}W - {RecentSummary.Losses}L" : WinLoss;
+            set { }
+        }
     }
 
     public class RecentHero
@@ -185,13 +243,19 @@ namespace DotaOverlay.Wpf.Models
         [JsonPropertyName("name")]
         public string Name { get; set; } = "";
 
+        [JsonPropertyName("hero_name")]
+        public string? HeroName { get; set; }
+
         [JsonPropertyName("winrate_pct")]
         public double WinratePct { get; set; }
 
         [JsonPropertyName("games")]
         public int Games { get; set; }
 
-        [JsonPropertyName("is_cheese")]
-        public bool IsCheese { get; set; }
+        public string DisplayHeroName
+        {
+            get => !string.IsNullOrEmpty(HeroName) ? HeroName : Name;
+            set { }
+        }
     }
 }

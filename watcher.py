@@ -184,7 +184,9 @@ def start_overlay():
         return
     if os.path.exists(OVERLAY_EXE):
         try:
-            _overlay_proc = subprocess.Popen([OVERLAY_EXE], creationflags=0x08000000)
+            si = subprocess.STARTUPINFO()
+            si.lpDesktop = r"winsta0\default"
+            _overlay_proc = subprocess.Popen([OVERLAY_EXE], startupinfo=si, creationflags=0x08000000)
             log("WPF In-Game Overlay запущен (PID %d)" % _overlay_proc.pid)
         except Exception as e:
             log("Не удалось запустить WPF In-Game Overlay: %s" % e)
@@ -214,6 +216,8 @@ def main():
                 was_running = running
                 log("dota2.exe: %s" % ("запущена" if running else "не найдена"))
                 save_state({"dota_running": running, "ts": time.time()})
+                if running:
+                    start_overlay()
             elif running != was_running:
                 was_running = running
                 if running:

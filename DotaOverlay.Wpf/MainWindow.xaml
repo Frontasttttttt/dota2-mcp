@@ -1,13 +1,14 @@
 <Window x:Class="DotaOverlay.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Dota 2 In-Game Overlay"
+        Title="Dota 2 Timers HUD"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        WindowState="Maximized"
+        WindowStartupLocation="Manual"
+        Left="1680" Top="40" Width="850" Height="65"
         Focusable="False">
     <Window.Resources>
         <Style x:Key="GlassBorder" TargetType="Border">
@@ -17,7 +18,7 @@
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.75" />
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.8" />
                 </Setter.Value>
             </Setter>
         </Style>
@@ -27,279 +28,97 @@
             <Setter Property="BorderBrush" Value="#21262D" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Padding" Value="7,3" />
+            <Setter Property="Margin" Value="3,0" />
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <!-- 1. ВСПЛЫВАЮЩИЙ ТОСТ ПРИ ПЕРЕКЛЮЧЕНИИ РЕЖИМОВ (F8) -->
-        <Border x:Name="NotificationToast" Style="{StaticResource GlassBorder}" 
-                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,15,0,0"
-                Padding="16,8" Visibility="Collapsed" Opacity="0">
-            <TextBlock x:Name="ToastText" Text="Режим оверлея: Авто" Foreground="#58A6FF" FontWeight="SemiBold" FontSize="13" />
-        </Border>
-
-        <!-- 2. ИГРОВЫЕ ТАЙМЕРЫ И БАЙБЕК (IN-GAME HUD) -->
-        <Border x:Name="InGameTimersHud" Style="{StaticResource GlassBorder}"
-                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,38,18,0"
-                Padding="10,6" Visibility="Visible">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <!-- Статус матча / Время -->
-                <Border Style="{StaticResource TimerItemStyle}" Background="#0D1117">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⏱️" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="TxtClock" Text="00:00" Foreground="#E6EDF3" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Border>
-
-                <!-- Река (Вода / Активные руны) -->
-                <Border x:Name="BoxRiver" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock x:Name="IconRiver" Text="💧" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtRiverTitle" Text="РЕКА" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtRiverFmt" Text="02:00" Foreground="#58A6FF" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Лотусы -->
-                <Border x:Name="BoxLotus" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="🌸" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="ЛОТУС" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtLotusFmt" Text="03:00" Foreground="#F43F5E" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Баунти руны -->
-                <Border x:Name="BoxBounty" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="💰" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="БАУНТИ" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtBountyFmt" Text="04:00" Foreground="#FBBF24" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Руна мудрости -->
-                <Border x:Name="BoxWisdom" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📖" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="МУДРОСТЬ" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtWisdomFmt" Text="07:00" Foreground="#A78BFA" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Рошан и День/Ночь -->
-                <Border x:Name="BoxRoshan" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock x:Name="IconRoshan" Text="☀️" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtRoshanTitle" Text="РОШАН: ЮГ" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtRoshanFmt" Text="05:00" Foreground="#F59E0B" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Терзатель -->
-                <Border x:Name="BoxTormentor" Style="{StaticResource TimerItemStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="🛡️" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="ТЕРЗАТЕЛЬ" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtTormentorFmt" Text="20:00" Foreground="#34D399" FontSize="12" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Байбек -->
-                <Border x:Name="BoxBuyback" Style="{StaticResource TimerItemStyle}" Background="#0F1F17" BorderBrush="#10B981">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="💵" Margin="0,0,4,0" VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="БАЙБЕК" Foreground="#8B949E" FontSize="9" FontWeight="Bold" />
-                            <TextBlock x:Name="TxtBuybackStatus" Text="ГОТОВ" Foreground="#10B981" FontSize="11" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Border>
-
-        <!-- 3. DRAFT RADAR / SMURF HUNTER (СТАДИЯ ВЫБОРА ГЕРОЕВ) -->
-        <Grid x:Name="DraftRadarHud" Visibility="Collapsed" Margin="30,50,30,60">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- Бан-совет и оповещение -->
-            <Border Grid.Row="0" Style="{StaticResource GlassBorder}" Background="#D9161B22" 
-                    HorizontalAlignment="Center" Margin="0,0,0,16" Padding="20,10">
+    <Border Style="{StaticResource GlassBorder}" Padding="8,4" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- Статус матча / Время -->
+            <Border Style="{StaticResource TimerItemStyle}" Background="#0D1117">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🚨 СМУРФ-РАДАР ЛОББИ:" Foreground="#F87171" FontWeight="Bold" FontSize="13" Margin="0,0,8,0" />
-                    <TextBlock x:Name="TxtBanAdvice" Text="Сканирование игроков лобби в реальном времени..." Foreground="#E6EDF3" FontSize="13" />
+                    <TextBlock Text="⏱️" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TxtClock" Text="00:00" Foreground="#E6EDF3" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
             </Border>
 
-            <!-- Две колонки команд -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <!-- Река (Вода / Активные руны) -->
+            <Border x:Name="BoxRiver" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="IconRiver" Text="💧" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtRiverTitle" Text="РЕКА" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtRiverFmt" Text="02:00" Foreground="#58A6FF" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-                <!-- 🟢 RADIANT -->
-                <Border Grid.Column="0" Style="{StaticResource GlassBorder}" Padding="14">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="🟢 RADIANT (СОЮЗНИКИ)" Foreground="#2DD4BF" FontWeight="Bold" FontSize="14" />
-                            <TextBlock x:Name="TxtRadCount" Text=" (0/5)" Foreground="#8B949E" FontSize="13" Margin="4,0,0,0" />
-                        </StackPanel>
-                        <ItemsControl Grid.Row="1" x:Name="ItemsRadiant">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,8" Padding="10,6" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <!-- Ранг / Аватарка -->
-                                            <Border Grid.Column="0" Background="#21262D" CornerRadius="6" Padding="6,2" Margin="0,0,10,0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding RankName}" Foreground="#E6EDF3" FontSize="11" FontWeight="SemiBold" />
-                                            </Border>
-                                            <!-- Ник и статы -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Name}" Foreground="#E6EDF3" FontWeight="Bold" FontSize="13" Margin="0,0,8,0" />
-                                                    <TextBlock Text="{Binding ThreatTitle}" Foreground="#F87171" FontWeight="Bold" FontSize="11" />
-                                                </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                    <TextBlock Text="Винрейт: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding WinratePct, StringFormat={}{0:F0}%}" Foreground="#34D399" FontWeight="SemiBold" FontSize="11" Margin="0,0,10,0" />
-                                                    <TextBlock Text="W-L: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding WinLoss}" Foreground="#E6EDF3" FontSize="11" Margin="0,0,10,0" />
-                                                    <TextBlock Text="KDA: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding AvgKda, StringFormat={}{0:F1}}" Foreground="#38BDF8" FontWeight="SemiBold" FontSize="11" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <!-- Недавние сигнатурки -->
-                                            <ItemsControl Grid.Column="2" ItemsSource="{Binding RecentHeroes}" VerticalAlignment="Center">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Background="#21262D" CornerRadius="4" Padding="5,2" Margin="3,0">
-                                                            <TextBlock>
-                                                                <Run Text="{Binding Name}" Foreground="#E6EDF3" FontSize="10" FontWeight="SemiBold" />
-                                                                <Run Text=" " />
-                                                                <Run Text="{Binding WinratePct, StringFormat={}{0:F0}%}" Foreground="#FBBF24" FontSize="10" FontWeight="Bold" />
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Border>
+            <!-- Лотусы -->
+            <Border x:Name="BoxLotus" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🌸" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="ЛОТУС" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtLotusFmt" Text="03:00" Foreground="#F43F5E" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-                <!-- 🔴 DIRE -->
-                <Border Grid.Column="2" Style="{StaticResource GlassBorder}" Padding="14">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="🔴 DIRE (ПРОТИВНИКИ)" Foreground="#F43F5E" FontWeight="Bold" FontSize="14" />
-                            <TextBlock x:Name="TxtDireCount" Text=" (0/5)" Foreground="#8B949E" FontSize="13" Margin="4,0,0,0" />
-                        </StackPanel>
-                        <ItemsControl Grid.Row="1" x:Name="ItemsDire">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,8" Padding="10,6" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <!-- Ранг / Аватарка -->
-                                            <Border Grid.Column="0" Background="#21262D" CornerRadius="6" Padding="6,2" Margin="0,0,10,0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding RankName}" Foreground="#E6EDF3" FontSize="11" FontWeight="SemiBold" />
-                                            </Border>
-                                            <!-- Ник и статы -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Name}" Foreground="#E6EDF3" FontWeight="Bold" FontSize="13" Margin="0,0,8,0" />
-                                                    <TextBlock Text="{Binding ThreatTitle}" Foreground="#F87171" FontWeight="Bold" FontSize="11" />
-                                                </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                    <TextBlock Text="Винрейт: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding WinratePct, StringFormat={}{0:F0}%}" Foreground="#34D399" FontWeight="SemiBold" FontSize="11" Margin="0,0,10,0" />
-                                                    <TextBlock Text="W-L: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding WinLoss}" Foreground="#E6EDF3" FontSize="11" Margin="0,0,10,0" />
-                                                    <TextBlock Text="KDA: " Foreground="#8B949E" FontSize="11" />
-                                                    <TextBlock Text="{Binding AvgKda, StringFormat={}{0:F1}}" Foreground="#38BDF8" FontWeight="SemiBold" FontSize="11" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <!-- Недавние сигнатурки -->
-                                            <ItemsControl Grid.Column="2" ItemsSource="{Binding RecentHeroes}" VerticalAlignment="Center">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Background="#21262D" CornerRadius="4" Padding="5,2" Margin="3,0">
-                                                            <TextBlock>
-                                                                <Run Text="{Binding Name}" Foreground="#E6EDF3" FontSize="10" FontWeight="SemiBold" />
-                                                                <Run Text=" " />
-                                                                <Run Text="{Binding WinratePct, StringFormat={}{0:F0}%}" Foreground="#FBBF24" FontSize="10" FontWeight="Bold" />
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Border>
-            </Grid>
-        </Grid>
+            <!-- Баунти руны -->
+            <Border x:Name="BoxBounty" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="💰" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="БАУНТИ" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtBountyFmt" Text="04:00" Foreground="#FBBF24" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-        <!-- 4. СТАТУС В УГЛУ ЭКРАНА -->
-        <Border Style="{StaticResource GlassBorder}" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
-                Margin="18,0,0,18" Padding="10,4" Background="#D90D1117">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🛡️ Dota 2 Overlay" Foreground="#8B949E" FontSize="11" FontWeight="SemiBold" />
-                <TextBlock Text=" | [F8] Режим" Foreground="#58A6FF" FontSize="11" Margin="4,0,0,0" />
-                <TextBlock x:Name="TxtStatus" Text=" | Ожидание игры..." Foreground="#6E7681" FontSize="11" Margin="4,0,0,0" />
-            </StackPanel>
-        </Border>
-    </Grid>
+            <!-- Руна мудрости -->
+            <Border x:Name="BoxWisdom" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📖" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="МУДРОСТЬ" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtWisdomFmt" Text="07:00" Foreground="#A78BFA" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Рошан и День/Ночь -->
+            <Border x:Name="BoxRoshan" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="IconRoshan" Text="☀️" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtRoshanTitle" Text="РОШАН: ЮГ" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtRoshanFmt" Text="05:00" Foreground="#F59E0B" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Терзатель -->
+            <Border x:Name="BoxTormentor" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🛡️" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="ТЕРЗАТЕЛЬ" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtTormentorFmt" Text="20:00" Foreground="#34D399" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Байбек -->
+            <Border x:Name="BoxBuyback" Style="{StaticResource TimerItemStyle}" Background="#0F1F17" BorderBrush="#10B981">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="💵" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="БАЙБЕК" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtBuybackStatus" Text="ГОТОВ" Foreground="#10B981" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
 </Window>

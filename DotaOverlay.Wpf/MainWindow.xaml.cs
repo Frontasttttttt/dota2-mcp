@@ -1,24 +1,13 @@
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using DotaOverlay.Wpf.Models;
 using DotaOverlay.Wpf.Services;
 
 namespace DotaOverlay.Wpf
 {
-    public enum OverlayMode
-    {
-        Auto,
-        TimersOnly,
-        DraftOnly,
-        Hidden
-    }
-
     public partial class MainWindow : Window
     {
         private const int GWL_EXSTYLE = -20;
@@ -43,30 +32,42 @@ namespace DotaOverlay.Wpf
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_SHOWWINDOW = 0x0040;
+
         private IntPtr _hwnd;
         private DotaStateService _stateService = new();
-        private OverlayMode _currentMode = OverlayMode.Auto;
-        private BoardResponse? _lastBoard;
+        private bool _isOverlayVisible = true;
 
         public MainWindow()
         {
             InitializeComponent();
-            Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        protected override void OnSourceInitialized(EventArgs e)
         {
+            base.OnSourceInitialized(e);
             _hwnd = new WindowInteropHelper(this).Handle;
 
-            // Настройка Click-Through (прозрачность для кликов мыши — клики летят в Доту)
+            // Размещаем виджет в свободном месте монитора 2560x1080 (X=1680, Y=38)
+            Left = 1680;
+            Top = 38;
+            Width = 850;
+            Height = 65;
+
+            // Настройка Click-Through (прозрачность для кликов)
             int exStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
             SetWindowLong(_hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
+            SetWindowPos(_hwnd, HWND_TOPMOST, 1680, 38, 850, 65, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
             // Регистрация глобальной горячей клавиши F8
             RegisterHotKey(_hwnd, HOTKEY_ID_F8, 0, VK_F8);
 
-            // Подключение хука сообщений окна для отлова F8
             var source = HwndSource.FromHwnd(_hwnd);
             source?.AddHook(HwndHook);
 
@@ -79,56 +80,17 @@ namespace DotaOverlay.Wpf
         {
             if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID_F8)
             {
-                CycleOverlayMode();
+                _isOverlayVisible = !_isOverlayVisible;
+                Visibility = _isOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
                 handled = true;
             }
             return IntPtr.Zero;
-        }
-
-        private void CycleOverlayMode()
-        {
-            _currentMode = _currentMode switch
-            {
-                OverlayMode.Auto => OverlayMode.TimersOnly,
-                OverlayMode.TimersOnly => OverlayMode.DraftOnly,
-                OverlayMode.DraftOnly => OverlayMode.Hidden,
-                OverlayMode.Hidden => OverlayMode.Auto,
-                _ => OverlayMode.Auto
-            };
-
-            string modeTitle = _currentMode switch
-            {
-                OverlayMode.Auto => "Авто (Драфт при пиках, Таймеры в игре)",
-                OverlayMode.TimersOnly => "Только таймеры рун и карты",
-                OverlayMode.DraftOnly => "Только смурф-радар драфта",
-                OverlayMode.Hidden => "Скрыт (нажми F8 для включения)",
-                _ => "Авто"
-            };
-
-            ShowToast($"Режим оверлея: {modeTitle}");
-            ApplyCurrentDisplayMode();
-        }
-
-        private async void ShowToast(string message)
-        {
-            ToastText.Text = message;
-            NotificationToast.Visibility = Visibility.Visible;
-            
-            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
-            NotificationToast.BeginAnimation(OpacityProperty, fadeIn);
-
-            await Task.Delay(2200);
-
-            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
-            fadeOut.Completed += (s, e) => { NotificationToast.Visibility = Visibility.Collapsed; };
-            NotificationToast.BeginAnimation(OpacityProperty, fadeOut);
         }
 
         private void OnStateUpdated(BoardResponse? board)
         {
             Dispatcher.Invoke(() =>
             {
-                _lastBoard = board;
                 UpdateUi(board);
             });
         }
@@ -137,15 +99,8 @@ namespace DotaOverlay.Wpf
         {
             if (board == null || !board.Ok)
             {
-                TxtStatus.Text = " | Ожидание GSI / Меню";
-                TxtStatus.Foreground = new SolidColorBrush(Color.FromRgb(110, 118, 129));
-                ApplyVisibility(false, false);
                 return;
             }
-
-            string stage = board.Stage ?? "UNKNOWN";
-            TxtStatus.Text = $" | {stage}";
-            TxtStatus.Foreground = new SolidColorBrush(Color.FromRgb(45, 212, 191));
 
             // Обновление таймеров карты
             if (board.Timers != null)
@@ -164,7 +119,6 @@ namespace DotaOverlay.Wpf
                 IconRoshan.Text = board.Timers.IsDay ? "☀️" : "🌙";
                 TxtTormentorFmt.Text = board.Timers.TormentorFmt;
 
-                // Подсветка таймеров за 20 секунд до спавна
                 HighlightTimer(BoxRiver, board.Timers.RiverSec <= 20, Color.FromRgb(56, 189, 248));
                 HighlightTimer(BoxLotus, board.Timers.LotusSec <= 20, Color.FromRgb(244, 63, 94));
                 HighlightTimer(BoxBounty, board.Timers.BountySec <= 20, Color.FromRgb(251, 191, 36));
@@ -193,34 +147,6 @@ namespace DotaOverlay.Wpf
                     BoxBuyback.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                 }
             }
-
-            // Обновление смурф-радара драфта
-            if (board.LobbyScout != null)
-            {
-                var rad = board.LobbyScout.Radiant ?? new();
-                var dire = board.LobbyScout.Dire ?? new();
-
-                ItemsRadiant.ItemsSource = rad;
-                ItemsDire.ItemsSource = dire;
-
-                TxtRadCount.Text = $" ({rad.Count}/5)";
-                TxtDireCount.Text = $" ({dire.Count}/5)";
-
-                // Поиск рекомендаций по банам среди противников
-                var enemyBan = dire.FirstOrDefault(p => !string.IsNullOrEmpty(p.BanAdvice))?.BanAdvice;
-                if (!string.IsNullOrEmpty(enemyBan))
-                {
-                    TxtBanAdvice.Text = enemyBan;
-                }
-                else
-                {
-                    TxtBanAdvice.Text = dire.Any(p => p.ThreatLevel == "danger")
-                        ? "🚨 Обнаружен потенциальный смурф/бустер во вражеской команде!"
-                        : "Сканирование лобби завершено. Критических аномалий не найдено.";
-                }
-            }
-
-            ApplyCurrentDisplayMode();
         }
 
         private void HighlightTimer(System.Windows.Controls.Border border, bool isUrgent, Color alertColor)
@@ -235,53 +161,6 @@ namespace DotaOverlay.Wpf
                 border.BorderBrush = new SolidColorBrush(Color.FromRgb(33, 38, 45));
                 border.Background = new SolidColorBrush(Color.FromRgb(22, 27, 34));
             }
-        }
-
-        private void ApplyCurrentDisplayMode()
-        {
-            if (_lastBoard == null || !_lastBoard.Ok)
-            {
-                ApplyVisibility(false, false);
-                return;
-            }
-
-            string stage = _lastBoard.Stage ?? "";
-
-            switch (_currentMode)
-            {
-                case OverlayMode.Auto:
-                    if (stage == "DOTA_GAMERULES_STATE_HERO_SELECTION")
-                    {
-                        ApplyVisibility(timers: false, draft: true);
-                    }
-                    else if (stage is "DOTA_GAMERULES_STATE_PRE_GAME" or "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS")
-                    {
-                        ApplyVisibility(timers: true, draft: false);
-                    }
-                    else
-                    {
-                        ApplyVisibility(timers: false, draft: false);
-                    }
-                    break;
-
-                case OverlayMode.TimersOnly:
-                    ApplyVisibility(timers: true, draft: false);
-                    break;
-
-                case OverlayMode.DraftOnly:
-                    ApplyVisibility(timers: false, draft: true);
-                    break;
-
-                case OverlayMode.Hidden:
-                    ApplyVisibility(timers: false, draft: false);
-                    break;
-            }
-        }
-
-        private void ApplyVisibility(bool timers, bool draft)
-        {
-            InGameTimersHud.Visibility = timers ? Visibility.Visible : Visibility.Collapsed;
-            DraftRadarHud.Visibility = draft ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void MainWindow_Closed(object? sender, EventArgs e)
