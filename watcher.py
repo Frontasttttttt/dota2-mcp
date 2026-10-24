@@ -172,20 +172,6 @@ def start_background_servers():
     except Exception as e:
         log("Не удалось запустить Live HUD: %s" % e)
 
-    # 3. In-Game Draft Overlay (прозрачный оверлей выбора героев)
-    try:
-        def _run_overlay():
-            try:
-                import draft_overlay
-                draft_overlay.main()
-            except Exception as e:
-                log("Draft Overlay ошибка: %s" % e)
-        t_overlay = threading.Thread(target=_run_overlay, daemon=True, name="DraftOverlayThread")
-        t_overlay.start()
-        log("In-Game Draft Overlay запущен (F8 для переключения)")
-    except Exception as e:
-        log("Не удалось запустить Draft Overlay: %s" % e)
-
 
 def main():
     start_background_servers()
