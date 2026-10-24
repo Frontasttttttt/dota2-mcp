@@ -173,6 +173,33 @@ def start_background_servers():
         log("Не удалось запустить Live HUD: %s" % e)
 
 
+
+OVERLAY_EXE = os.path.join(BASE, "overlay_bin", "DotaOverlay.Wpf.exe")
+_overlay_proc = None
+
+
+def start_overlay():
+    global _overlay_proc
+    if _overlay_proc is not None and _overlay_proc.poll() is None:
+        return
+    if os.path.exists(OVERLAY_EXE):
+        try:
+            _overlay_proc = subprocess.Popen([OVERLAY_EXE], creationflags=0x08000000)
+            log("WPF In-Game Overlay запущен (PID %d)" % _overlay_proc.pid)
+        except Exception as e:
+            log("Не удалось запустить WPF In-Game Overlay: %s" % e)
+
+
+def stop_overlay():
+    global _overlay_proc
+    if _overlay_proc is not None:
+        try:
+            _overlay_proc.terminate()
+            log("WPF In-Game Overlay остановлен")
+        except Exception:
+            pass
+        _overlay_proc = None
+
 def main():
     start_background_servers()
     log("watcher старт (опрос каждые %d c)" % POLL)
@@ -191,10 +218,12 @@ def main():
                 was_running = running
                 if running:
                     log("EVENT: Dota 2 ЗАПУЩЕНА")
-                    notify("Dota 2 MCP", "Дота запущена. HUD: http://127.0.0.1:8081")
+                    notify("Dota 2 MCP", "Дота запущена. HUD: http://127.0.0.1:8081 | Оверлей: F8")
+                    start_overlay()
                 else:
                     log("EVENT: Dota 2 ЗАКРЫТА")
                     notify("Dota 2 MCP", "Дота закрыта.")
+                    stop_overlay()
                     last_stage = None
                     match_start = None
                 save_state({"dota_running": running, "ts": time.time()})

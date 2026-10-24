@@ -16,6 +16,7 @@ A Valve Anti-Cheat (VAC) safe assistant powered by the Model Context Protocol (M
 - `draft_engine.py` — Full draft analysis and counter-pick engine for all 124+ heroes, with slang recognition, advantage metrics, damage/disable breakdown, and item recommendations
 - `postgame_analyzer.py` — Deep post-match algorithmic analyzer (KDA ratio, kill participation, damage shares, itemization audit vs enemy lineup, mistakes and strengths)
 - `live_board.py` — Modern Live HUD 2.0 web dashboard (`http://127.0.0.1:8081`): dark glassmorphism, no page reload, active map timers (Lotus, Wisdom, Tormentor, Day/Night), base buildings grid, interactive draft calculator, and hands-free team scouting radar (Radiant vs Dire)
+- `DotaOverlay.Wpf/` (`overlay_bin/DotaOverlay.Wpf.exe`, `start_overlay.bat`) — Native C# .NET 9 In-Game Transparent Click-Through Overlay: zero screen darkening, DirectX-accelerated 60 FPS glassmorphism, global F8 hotkey toggle, smurf radar during pick phase, map timers and buyback tracker during match
 - `live_data.py` — Live data aggregation and timer computation
 - `coach_cli.py` — Interactive terminal coach with instant access to live game status, draft counter-picking, lobby scouting, and match reviews
 - `config.json` — Configurable account ID, Steam/Dota installation paths, and GSI port

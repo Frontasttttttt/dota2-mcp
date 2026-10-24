@@ -1,4 +1,8 @@
-# Logs / state — не для git
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
 *.log
 gsi_latest.json
 live_history.json
