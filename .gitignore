@@ -1,6 +1,7 @@
 # .NET build artifacts
 bin/
 obj/
+*.pdb
 *.user
 *.suo
 *.log

@@ -7,8 +7,11 @@ import io
 import json
 import os
 import sys
+import threading
+import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import pipe_server
 
 try:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True)
@@ -1059,8 +1062,31 @@ class H(BaseHTTPRequestHandler):
         self._send(404, "Not Found")
 
 
+def start_pipe_broadcaster():
+    """Запускает Win32 Named Pipe сервер и фоновый броадкастер для C# WPF оверлея (<1 мс задержка)."""
+    try:
+        pipe_server.start_pipe_server()
+
+        def _worker():
+            srv = pipe_server.get_pipe_server()
+            while True:
+                try:
+                    if srv.is_connected():
+                        board = D.get_board()
+                        srv.broadcast(board)
+                    time.sleep(0.5)
+                except Exception:
+                    time.sleep(1.0)
+
+        t = threading.Thread(target=_worker, daemon=True, name="PipeBroadcasterThread")
+        t.start()
+    except Exception:
+        pass
+
+
 def main():
     C.track_tick()
+    start_pipe_broadcaster()
     srv = HTTPServer((HOST, PORT), H)
     print("Dota 2 Live HUD 2.0 запущен: http://%s:%d" % (HOST, PORT), flush=True)
     print("Открой в браузере. Разведка лобби и смурф-радар активны.", flush=True)

@@ -160,6 +160,7 @@ def start_background_servers():
         def _run_board():
             try:
                 live_board.C.track_tick()
+                live_board.start_pipe_broadcaster()
                 srv = live_board.HTTPServer((live_board.HOST, live_board.PORT), live_board.H)
                 log("Live HUD 2.0 (локальный сайт) запущен на http://%s:%d" % (live_board.HOST, live_board.PORT))
                 srv.serve_forever()

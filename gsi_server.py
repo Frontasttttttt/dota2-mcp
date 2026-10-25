@@ -1,4 +1,5 @@
 """GSI-приёмник: Dota 2 шлёт сюда POST с состоянием игры. Stdlib-only."""
+
 import json
 import os
 import threading
@@ -39,15 +40,29 @@ class Handler(BaseHTTPRequestHandler):
             with _lock:
                 ts = _last_seen["ts"]
             age = time.time() - ts if ts else -1
-            self._send(200, {"ok": True, "listening": True, "port": PORT,
-                             "last_packet_age_sec": age, "has_data": ts > 0})
+            self._send(
+                200,
+                {
+                    "ok": True,
+                    "listening": True,
+                    "port": PORT,
+                    "last_packet_age_sec": age,
+                    "has_data": ts > 0,
+                },
+            )
         elif self.path in ("/", "/latest"):
             try:
                 with open(STATE_FILE, encoding="utf-8") as f:
                     data = json.load(f)
                 self._send(200, data)
             except FileNotFoundError:
-                self._send(200, {"ok": False, "reason": "пока нет данных: зайди в матч и убедись что gsi_server.py запущен"})
+                self._send(
+                    200,
+                    {
+                        "ok": False,
+                        "reason": "пока нет данных: зайди в матч и убедись что gsi_server.py запущен",
+                    },
+                )
             except Exception as e:
                 self._send(500, {"ok": False, "error": str(e)})
         else:
@@ -70,6 +85,17 @@ class Handler(BaseHTTPRequestHandler):
                     json.dump(payload, f, ensure_ascii=False)
                 _last_seen["ts"] = payload["_received_at"]
             self._send(200, {"ok": True})
+
+            # Реактивное оповещение C# WPF оверлея по Named Pipe (<1 мс)
+            try:
+                import live_data as D
+                import pipe_server
+
+                srv = pipe_server.get_pipe_server()
+                if srv.is_connected():
+                    srv.broadcast(D.get_board())
+            except Exception:
+                pass
         except Exception as e:
             self._send(500, {"ok": False, "error": str(e)})
 
