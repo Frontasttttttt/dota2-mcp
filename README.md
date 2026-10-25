@@ -89,7 +89,7 @@ The in-game overlay is implemented in C# .NET 9 (`DotaOverlay.Wpf/`) using nativ
 | **True Click-Through** | Win32 styles `WS_EX_TRANSPARENT \| WS_EX_LAYERED \| WS_EX_NOACTIVATE` | Mouse clicks fall straight through to Dota 2; game never loses focus or input |
 | **Zero Screen Dimming** | DirectX hardware composition instead of Tkinter canvas alpha-blending | 100% transparent game view with crisp text and frosted glass badges |
 | **Draft Radar Mode** | Activates automatically during `HERO_SELECTION` | Shows 10-player cards: rank medals, winrates, smurf badges, signature hero pools |
-| **In-Game HUD Mode** | Activates during `GAME_IN_PROGRESS` and `PRE_GAME` | Compact corner widget: river/bounty/wisdom rune timers, tormentor, roshan, buyback status |
+| **In-Game HUD Mode** | Activates during `GAME_IN_PROGRESS` and `PRE_GAME` | Compact corner widget: river/bounty/wisdom runes, neutral item tiers (T1-T5), camp stacking (:53), tormentor, roshan, buyback |
 | **Reactive Named Pipe IPC** | `\\.\pipe\DotaOverlayPipe` push stream + HTTP fallback | Sub-millisecond (<1ms) push updates with 0 network overhead instead of polling |
 | **Global Hotkey** | Win32 `RegisterHotKey` on `F8` | Instantly toggles: `Auto` ➔ `Timers only` ➔ `Draft only` ➔ `Hidden` |
 | **Auto-Lifecycle** | Monitored by `watcher.py` | Automatically boots when `dota2.exe` opens and shuts down on game exit |

@@ -54,16 +54,16 @@ namespace DotaOverlay.Wpf
             base.OnSourceInitialized(e);
             _hwnd = new WindowInteropHelper(this).Handle;
 
-            // Размещаем виджет в свободном месте монитора 2560x1080 (X=1680, Y=38)
-            Left = 1680;
+            // Размещаем виджет в свободном месте монитора 2560x1080 (X=1560, Y=38)
+            Left = 1560;
             Top = 38;
-            Width = 850;
+            Width = 980;
             Height = 65;
 
             // Настройка Click-Through (прозрачность для кликов)
             int exStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
             SetWindowLong(_hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
-            SetWindowPos(_hwnd, HWND_TOPMOST, 1680, 38, 850, 65, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            SetWindowPos(_hwnd, HWND_TOPMOST, 1560, 38, 980, 65, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
             // Регистрация глобальной горячей клавиши F8
             RegisterHotKey(_hwnd, HOTKEY_ID_F8, 0, VK_F8);
@@ -118,6 +118,23 @@ namespace DotaOverlay.Wpf
                 TxtRoshanTitle.Text = $"РОШАН: {(board.Timers.IsDay ? "ЮГ (СВЕТ)" : "СЕВЕР (ТЬМА)")}";
                 IconRoshan.Text = board.Timers.IsDay ? "☀️" : "🌙";
                 TxtTormentorFmt.Text = board.Timers.TormentorFmt;
+
+                TxtNeutralsTitle.Text = board.Timers.NeutralTitle;
+                TxtNeutralsFmt.Text = board.Timers.NeutralFmt;
+                HighlightTimer(BoxNeutrals, board.Timers.NeutralAlert, Color.FromRgb(56, 189, 248));
+
+                TxtStackFmt.Text = board.Timers.StackFmt;
+                HighlightTimer(BoxStack, board.Timers.StackActive, Color.FromRgb(16, 185, 129));
+                if (board.Timers.StackActive)
+                {
+                    TxtStackFmt.Foreground = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                    IconStack.Text = "🔥";
+                }
+                else
+                {
+                    TxtStackFmt.Foreground = new SolidColorBrush(Color.FromRgb(230, 237, 243));
+                    IconStack.Text = "🌲";
+                }
 
                 HighlightTimer(BoxRiver, board.Timers.RiverSec <= 20, Color.FromRgb(56, 189, 248));
                 HighlightTimer(BoxLotus, board.Timers.LotusSec <= 20, Color.FromRgb(244, 63, 94));

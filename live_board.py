@@ -477,6 +477,14 @@ HTML_PAGE = """<!DOCTYPE html>
           <div class="timer-val" id="timer-tormentor">--:--</div>
         </div>
         <div class="timer-item">
+          <div class="timer-name" id="neutral-label">📦 Нейтральные жетоны</div>
+          <div class="timer-val" id="timer-neutral">--:--</div>
+        </div>
+        <div class="timer-item">
+          <div class="timer-name">🌲 Стак леса (:53-:55)</div>
+          <div class="timer-val" id="timer-stack">--:--</div>
+        </div>
+        <div class="timer-item">
           <div class="timer-name" id="cycle-label">☀️ До смены дня/ночи</div>
           <div class="timer-val" id="timer-cycle">--:--</div>
         </div>
@@ -618,6 +626,8 @@ HTML_PAGE = """<!DOCTYPE html>
           document.getElementById('timer-wisdom').textContent = '--:--';
           document.getElementById('timer-roshan').textContent = '--:--';
           document.getElementById('timer-tormentor').textContent = 'Старт на 20:00';
+          document.getElementById('timer-neutral').textContent = '--:--';
+          document.getElementById('timer-stack').textContent = '--:--';
           document.getElementById('timer-cycle').textContent = '--:--';
           document.getElementById('tempo-1m').textContent = '-';
           document.getElementById('tempo-5m').textContent = '-';
@@ -682,6 +692,23 @@ HTML_PAGE = """<!DOCTYPE html>
         document.getElementById('timer-wisdom').textContent = t.wisdom_fmt || '--:--';
         document.getElementById('timer-roshan').textContent = t.roshan_status || t.roshan_cave || '--:--';
         document.getElementById('timer-tormentor').textContent = t.tormentor_status || '--:--';
+        document.getElementById('timer-neutral').textContent = t.neutral_fmt || '--:--';
+        if (t.neutral_title) document.getElementById('neutral-label').textContent = '📦 ' + t.neutral_title;
+        if (t.neutral_alert) {
+          document.getElementById('timer-neutral').style.color = '#fbbf24';
+          document.getElementById('timer-neutral').style.fontWeight = 'bold';
+        } else {
+          document.getElementById('timer-neutral').style.color = 'var(--mana)';
+          document.getElementById('timer-neutral').style.fontWeight = 'normal';
+        }
+        document.getElementById('timer-stack').textContent = t.stack_fmt || '--:--';
+        if (t.stack_active) {
+          document.getElementById('timer-stack').style.color = '#10b981';
+          document.getElementById('timer-stack').style.fontWeight = 'bold';
+        } else {
+          document.getElementById('timer-stack').style.color = 'var(--text)';
+          document.getElementById('timer-stack').style.fontWeight = 'normal';
+        }
         document.getElementById('timer-cycle').textContent = t.day_night_fmt || '--:--';
         document.getElementById('cycle-label').textContent = (t.is_day ? '☀️' : '🌙') + ' До смены ' + (t.is_day ? 'ночи' : 'дня');
         document.getElementById('day-night-icon').textContent = (t.is_day ? '☀️ День' : '🌙 Ночь');

@@ -49,7 +49,9 @@ def compute_map_timers(clock_sec):
             "roshan_fmt": "05:00",
             "roshan_status": "Юго-Восток (Radiant ☀️)",
             "tormentor_sec": 1200, "tormentor_fmt": "20:00", "tormentor_status": "Спавн в 20:00",
-            "is_day": True, "day_night_sec": 300, "day_night_fmt": "05:00"
+            "is_day": True, "day_night_sec": 300, "day_night_fmt": "05:00",
+            "neutral_tier": 1, "neutral_sec": 420, "neutral_fmt": "07:00", "neutral_title": "НЕЙТРАЛКИ Т1", "neutral_alert": False,
+            "stack_sec": 53, "stack_fmt": "53с", "stack_active": False,
         }
 
     c = int(clock_sec)
@@ -102,6 +104,59 @@ def compute_map_timers(clock_sec):
         tormentor_fmt = "Активен"
         tormentor_status = "Активен (осколок Аганима)"
 
+    # 7. Нейтральные предметы (07:00, 17:00, 27:00, 37:00, 60:00)
+    if c < 420:
+        n_tier = 1
+        n_rem = 420 - c
+        n_title = "НЕЙТРАЛКИ Т1"
+        n_fmt = "%02d:%02d" % (n_rem // 60, n_rem % 60)
+        n_alert = n_rem <= 30
+    elif c < 1020:
+        n_tier = 2
+        n_rem = 1020 - c
+        n_title = "НЕЙТРАЛКИ Т2"
+        n_fmt = "%02d:%02d" % (n_rem // 60, n_rem % 60)
+        n_alert = n_rem <= 30
+    elif c < 1620:
+        n_tier = 3
+        n_rem = 1620 - c
+        n_title = "НЕЙТРАЛКИ Т3"
+        n_fmt = "%02d:%02d" % (n_rem // 60, n_rem % 60)
+        n_alert = n_rem <= 30
+    elif c < 2220:
+        n_tier = 4
+        n_rem = 2220 - c
+        n_title = "НЕЙТРАЛКИ Т4"
+        n_fmt = "%02d:%02d" % (n_rem // 60, n_rem % 60)
+        n_alert = n_rem <= 30
+    elif c < 3600:
+        n_tier = 5
+        n_rem = 3600 - c
+        n_title = "НЕЙТРАЛКИ Т5"
+        n_fmt = "%02d:%02d" % (n_rem // 60, n_rem % 60)
+        n_alert = n_rem <= 30
+    else:
+        n_tier = 5
+        n_rem = 0
+        n_title = "НЕЙТРАЛКИ Т5"
+        n_fmt = "Активны"
+        n_alert = False
+
+    # 8. Стак лесных лагерей: окно :53-:55 каждой минуты
+    sec_in_min = c % 60 if c >= 0 else 0
+    if sec_in_min < 45:
+        stack_rem = 53 - sec_in_min
+        stack_fmt = "%02dс" % stack_rem
+        stack_active = False
+    elif 45 <= sec_in_min <= 55:
+        stack_rem = 0
+        stack_fmt = "СТАКАЙ (:53)!"
+        stack_active = True
+    else:
+        stack_rem = (60 - sec_in_min) + 53
+        stack_fmt = "%02dс" % stack_rem
+        stack_active = False
+
     return {
         "clock_sec": c,
         "bounty_sec": bounty_rem,
@@ -122,6 +177,14 @@ def compute_map_timers(clock_sec):
         "tormentor_sec": tormentor_rem,
         "tormentor_fmt": tormentor_fmt,
         "tormentor_status": tormentor_status,
+        "neutral_tier": n_tier,
+        "neutral_sec": n_rem,
+        "neutral_fmt": n_fmt,
+        "neutral_title": n_title,
+        "neutral_alert": n_alert,
+        "stack_sec": stack_rem,
+        "stack_fmt": stack_fmt,
+        "stack_active": stack_active,
     }
 
 

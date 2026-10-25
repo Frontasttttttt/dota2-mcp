@@ -82,6 +82,30 @@ namespace DotaOverlay.Wpf.Models
 
         [JsonPropertyName("day_night_fmt")]
         public string DayNightFmt { get; set; } = "00:00";
+
+        [JsonPropertyName("neutral_tier")]
+        public int NeutralTier { get; set; } = 1;
+
+        [JsonPropertyName("neutral_sec")]
+        public int NeutralSec { get; set; }
+
+        [JsonPropertyName("neutral_fmt")]
+        public string NeutralFmt { get; set; } = "07:00";
+
+        [JsonPropertyName("neutral_title")]
+        public string NeutralTitle { get; set; } = "НЕЙТРАЛКИ Т1";
+
+        [JsonPropertyName("neutral_alert")]
+        public bool NeutralAlert { get; set; }
+
+        [JsonPropertyName("stack_sec")]
+        public int StackSec { get; set; }
+
+        [JsonPropertyName("stack_fmt")]
+        public string StackFmt { get; set; } = "53с";
+
+        [JsonPropertyName("stack_active")]
+        public bool StackActive { get; set; }
     }
 
     public class TeamScore

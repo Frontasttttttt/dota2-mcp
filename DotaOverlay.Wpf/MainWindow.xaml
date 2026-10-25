@@ -8,7 +8,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual"
-        Left="1680" Top="40" Width="850" Height="65"
+        Left="1560" Top="40" Width="980" Height="65"
         Focusable="False">
     <Window.Resources>
         <Style x:Key="GlassBorder" TargetType="Border">
@@ -105,6 +105,28 @@
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="ТЕРЗАТЕЛЬ" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
                         <TextBlock x:Name="TxtTormentorFmt" Text="20:00" Foreground="#34D399" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Нейтральные предметы (Т1..Т5) -->
+            <Border x:Name="BoxNeutrals" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📦" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtNeutralsTitle" Text="НЕЙТРАЛКИ Т1" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtNeutralsFmt" Text="07:00" Foreground="#38BDF8" FontSize="11" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Стак леса (:53) -->
+            <Border x:Name="BoxStack" Style="{StaticResource TimerItemStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="IconStack" Text="🌲" Margin="0,0,3,0" VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtStackTitle" Text="СТАК ЛЕСА" Foreground="#8B949E" FontSize="8" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtStackFmt" Text="53с" Foreground="#E6EDF3" FontSize="11" FontWeight="Bold" />
                     </StackPanel>
                 </StackPanel>
             </Border>
