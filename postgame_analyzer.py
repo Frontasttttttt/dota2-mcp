@@ -289,6 +289,241 @@ def fmt_postgame_report(rep):
     return "\n".join(lines)
 
 
+def generate_postgame_html(rep):
+    """Генерирует автономный интерактивный Generative UI виджет разбора матча."""
+    if not rep.get("ok"):
+        err = rep.get("error", "Неизвестная ошибка")
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-4">
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+    <div class="text-rose-500 font-bold text-base mb-1">Ошибка разбора матча</div>
+    <div class="text-[var(--muted-foreground)] text-xs">{err}</div>
+  </div>
+</body>
+</html>"""
+
+    p = rep.get("player", {})
+    v = rep.get("verdict", {})
+    mid = rep.get("match_id", 0)
+    dur = rep.get("duration_min", 0)
+    res = rep.get("result", "МАТЧ")
+    is_win = "ПОБЕДА" in res
+    score = rep.get("score", "- : -")
+
+    # Формируем HTML для сильных сторон
+    strengths_html = "".join(
+        f'<li class="flex items-start gap-2 text-xs text-[var(--foreground)]"><span class="text-emerald-500 shrink-0">✔</span><span>{s}</span></li>'
+        for s in v.get("strengths", [])
+    ) or '<li class="text-xs text-[var(--muted-foreground)]">Нет явных позитивных моментов</li>'
+
+    # Формируем HTML для ошибок
+    mistakes_html = "".join(
+        f'<li class="flex items-start gap-2 text-xs text-[var(--foreground)]"><span class="text-amber-500 shrink-0">⚠️</span><span>{m}</span></li>'
+        for m in v.get("mistakes", [])
+    ) or '<li class="text-xs text-[var(--muted-foreground)]">Критических ошибок не зафиксировано</li>'
+
+    # Формируем HTML для советов
+    recs_html = "".join(
+        f'<li class="flex items-start gap-2 text-xs text-[var(--foreground)]"><span class="text-indigo-400 shrink-0">💡</span><span>{r}</span></li>'
+        for r in v.get("recommendations", [])
+    ) or '<li class="text-xs text-[var(--muted-foreground)]">Продолжай играть в том же духе!</li>'
+
+    # Предметы
+    items = p.get("items", [])
+    items_html = "".join(
+        f'<div class="flex items-center gap-2 bg-[var(--background)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)]"><span class="text-amber-400">⚔️</span><span class="truncate">{item}</span></div>'
+        for item in items
+    ) or '<div class="text-xs text-[var(--muted-foreground)]">Инвентарь пуст</div>'
+
+    neutral_item = p.get("neutral_item")
+    neutral_badge = f'<div class="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-400"><span class="text-indigo-400">🔮</span><span>{neutral_item}</span></div>' if neutral_item else '<div class="text-xs text-[var(--muted-foreground)]">Без нейтралки</div>'
+
+    result_badge_class = "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" if is_win else "bg-rose-500/15 text-rose-400 border-rose-500/30"
+    result_text = "ПОБЕДА" if is_win else "ПОРАЖЕНИЕ"
+
+    hero_name = p.get("hero", "Герой")
+    kda_str = p.get("kda", "0/0/0")
+    kda_ratio = float(p.get("kda_ratio", 0))
+    kp_pct = float(p.get("kp_pct", 0))
+    kp_width = min(100.0, kp_pct)
+    h_dmg = int(p.get("hero_damage", 0))
+    dmg_share = float(p.get("dmg_share_pct", 0))
+    gpm_val = int(p.get("gpm", 0))
+    xpm_val = int(p.get("xpm", 0))
+    t_dmg = int(p.get("tower_damage", 0))
+    t_share = float(p.get("tower_share_pct", 0))
+    t_width = min(100.0, t_share)
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-3 sm:p-5 select-none font-sans">
+  <div class="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto">
+    
+    <!-- Header -->
+    <div class="p-4 sm:p-5 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-3 bg-[var(--sidebar)]/40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-[var(--border)] flex items-center justify-center text-xl shadow-inner">
+          🎮
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-[var(--foreground)]">{hero_name}</h1>
+            <span class="px-2 py-0.5 text-xs font-bold rounded-full border {result_badge_class}">{result_text}</span>
+          </div>
+          <div class="text-xs text-[var(--muted-foreground)] flex items-center gap-2 mt-0.5">
+            <span>Матч #{mid}</span>
+            <span>•</span>
+            <span>⏱️ {dur} мин</span>
+            <span>•</span>
+            <span>Счёт {score}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+        <button id="btn-stats" onclick="switchTab('stats')" class="tab-btn px-3 py-1 text-xs font-semibold rounded-lg bg-[var(--card)] text-[var(--foreground)] shadow-sm transition">Статистика</button>
+        <button id="btn-coach" onclick="switchTab('coach')" class="tab-btn px-3 py-1 text-xs font-semibold rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">Разбор тренера</button>
+        <button id="btn-items" onclick="switchTab('items')" class="tab-btn px-3 py-1 text-xs font-semibold rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">Закуп</button>
+      </div>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="p-4 sm:p-5 space-y-4">
+
+      <!-- View: Stats -->
+      <div id="view-stats" class="tab-view space-y-4">
+        <!-- 4-Grid Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">KDA (Счёт)</div>
+            <div class="text-sm sm:text-base font-bold text-[var(--foreground)] mt-0.5">{kda_str}</div>
+            <div class="text-xs text-emerald-400 mt-1">Ratio: {kda_ratio:.2f}</div>
+          </div>
+
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">Участие в драках</div>
+            <div class="text-sm sm:text-base font-bold text-[var(--foreground)] mt-0.5">{kp_pct:.1f}%</div>
+            <div class="w-full bg-[var(--border)] h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="bg-indigo-500 h-full rounded-full" style="width: {kp_width:.1f}%"></div>
+            </div>
+          </div>
+
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">Урон по героям</div>
+            <div class="text-sm sm:text-base font-bold text-[var(--foreground)] mt-0.5">{h_dmg:,}</div>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">{dmg_share:.1f}% команды</div>
+          </div>
+
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3">
+            <div class="text-xs text-[var(--muted-foreground)] font-medium">Фарм (GPM / XPM)</div>
+            <div class="text-sm sm:text-base font-bold text-amber-400 mt-0.5">{gpm_val} <span class="text-xs font-normal text-[var(--muted-foreground)]">GPM</span></div>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">{xpm_val} XPM</div>
+          </div>
+        </div>
+
+        <!-- Push & Objectives Bar -->
+        <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3 sm:p-4">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-medium text-[var(--foreground)]">🏰 Урон по строениям (Пуш)</span>
+            <span class="font-bold text-emerald-400">{t_dmg:,} ({t_share:.1f}% урона команды)</span>
+          </div>
+          <div class="w-full bg-[var(--border)] h-2 rounded-full overflow-hidden">
+            <div class="bg-emerald-500 h-full rounded-full" style="width: {t_width:.1f}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Coach Analysis -->
+      <div id="view-coach" class="tab-view hidden space-y-3">
+        <!-- Strengths -->
+        <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3.5">
+          <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>✅</span><span>Что было сделано отлично:</span>
+          </div>
+          <ul class="space-y-1.5">
+            {strengths_html}
+          </ul>
+        </div>
+
+        <!-- Mistakes -->
+        <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3.5">
+          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>⚠️</span><span>Ключевые ошибки и слабые места:</span>
+          </div>
+          <ul class="space-y-1.5">
+            {mistakes_html}
+          </ul>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-3.5">
+          <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>💡</span><span>Советы для следующей игры:</span>
+          </div>
+          <ul class="space-y-1.5">
+            {recs_html}
+          </ul>
+        </div>
+      </div>
+
+      <!-- View: Items -->
+      <div id="view-items" class="tab-view hidden space-y-4">
+        <div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">Основной инвентарь (6 слотов)</div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {items_html}
+          </div>
+        </div>
+
+        <div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">Нейтральный предмет</div>
+          <div class="inline-block">
+            {neutral_badge}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Action -->
+    <div class="px-4 py-3 bg-[var(--sidebar)]/30 border-t border-[var(--border)] flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+      <span>Dota 2 MCP • Fast & VAC-Safe</span>
+      <span class="text-emerald-400 font-medium">Анализ завершен (0 платных токенов)</span>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId) {{
+      document.querySelectorAll('.tab-view').forEach(function(el) {{ el.classList.add('hidden'); }});
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {{
+        btn.classList.remove('bg-[var(--card)]', 'text-[var(--foreground)]', 'shadow-sm');
+        btn.classList.add('text-[var(--muted-foreground)]');
+      }});
+
+      var targetView = document.getElementById('view-' + tabId);
+      var targetBtn = document.getElementById('btn-' + tabId);
+      if (targetView) targetView.classList.remove('hidden');
+      if (targetBtn) {{
+        targetBtn.classList.remove('text-[var(--muted-foreground)]');
+        targetBtn.classList.add('bg-[var(--card)]', 'text-[var(--foreground)]', 'shadow-sm');
+      }}
+    }}
+  </script>
+</body>
+</html>"""
+
+
+
 if __name__ == "__main__":
     try:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")

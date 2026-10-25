@@ -26,6 +26,7 @@ def t_match_details(match_id):
     rep = postgame_analyzer.analyze_match(match_id, aid)
     if rep.get("ok"):
         rep["текст"] = postgame_analyzer.fmt_postgame_report(rep)
+        rep["html"] = postgame_analyzer.generate_postgame_html(rep)
     return rep
 
 
